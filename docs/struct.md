@@ -1,3 +1,4 @@
+```text
 streak-app/
 │
 ├── frontend/                  # Next.js Consumer App (Mobile-first UI)
@@ -44,3 +45,4 @@ streak-app/
     ├── .env                   # Supabase keys & Somnia RPC
     ├── tsconfig.json
     └── package.json
+```
