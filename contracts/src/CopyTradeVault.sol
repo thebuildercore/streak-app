@@ -4,41 +4,35 @@ pragma solidity ^0.8.20;
 import {IERC20} from "openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
-/**
- * @dev Interface for the DreamDEX Event Contract Market.
- * NOTE: You will need to update the exact function signature of `placeOrder` 
- * to match the actual DreamDEX smart contract ABI used in their SDK.
- */
-interface IDreamDex {
-    function placeOrder(
-        address market, 
-        uint8 outcome, // e.g., 0 for NO, 1 for YES
-        uint256 amount, 
-        uint256 limitPrice
-    ) external;
+interface IDreamDexBinaryPool {
+    function placeBinaryOrder(
+        uint8 kind,
+        uint256 price,
+        uint256 quantity,
+        uint64 expireTimestampNs,
+        uint8 orderType,
+        uint8 selfMatchingOption,
+        address builder,
+        uint96 builderFeeBpsTimes1k,
+        uint64 userData
+    ) external payable returns (bool success, uint128 id);
 }
 
-/**
- * @title CopyTradeVault
- * @dev A personal vault that allows a user to deposit funds and delegate 
- * trading authority to an AI Bot (Session Key) up to a specific allowance.
- */
 contract CopyTradeVault {
     using SafeERC20 for IERC20;
 
     address public immutable owner;
-    IERC20 public immutable tradingToken; // e.g., USDC or the Somnia wrapped token
-    IDreamDex public immutable dreamDexRouter;
+    IERC20 public immutable tradingToken; // e.g., Testnet USDC
 
     address public authorizedBot;
     uint256 public botAllowance;
 
-    // Events for your backend indexer to listen to
+    // Events for backend indexer
     event Deposited(uint256 amount);
     event Withdrawn(uint256 amount);
     event BotAuthorized(address indexed bot, uint256 allowance);
     event BotRevoked(address indexed bot);
-    event TradeExecuted(address indexed market, uint8 outcome, uint256 amount);
+    event TradeExecuted(address indexed marketPool, uint8 kind, uint256 amount, uint128 orderId);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner");
@@ -50,65 +44,49 @@ contract CopyTradeVault {
         _;
     }
 
-    constructor(address _tradingToken, address _dreamDexRouter) {
+    constructor(address _tradingToken) {
         owner = msg.sender;
         tradingToken = IERC20(_tradingToken);
-        dreamDexRouter = IDreamDex(_dreamDexRouter);
     }
 
-    // ==========================================
-    // USER FUNCTIONS (Signed by MetaMask)
-    // ==========================================
 
-    /**
-     * @notice Deposit funds into the vault for the bot to trade with.
-     * @dev User must approve this contract to spend their tokens first.
-     */
+    // USER FUNCTIONS (Signed by MetaMask)
+
     function deposit(uint256 amount) external onlyOwner {
         tradingToken.safeTransferFrom(msg.sender, address(this), amount);
         emit Deposited(amount);
     }
 
-    /**
-     * @notice Withdraw unused funds back to the user's wallet.
-     */
     function withdraw(uint256 amount) external onlyOwner {
         tradingToken.safeTransfer(msg.sender, amount);
         emit Withdrawn(amount);
     }
 
-    /**
-     * @notice Authorize the AI bot's Session Key and set its spending limit.
-     */
     function authorizeBot(address _bot, uint256 _allowance) external onlyOwner {
         authorizedBot = _bot;
         botAllowance = _allowance;
         emit BotAuthorized(_bot, _allowance);
     }
 
-    /**
-     * @notice Revoke the bot's trading permissions immediately.
-     */
     function revokeBot() external onlyOwner {
         authorizedBot = address(0);
         botAllowance = 0;
         emit BotRevoked(authorizedBot);
     }
 
-    // ==========================================
     // BOT FUNCTIONS (Signed automatically by Node.js/AI Agent)
-    // ==========================================
+
 
     /**
      * @notice Called by the AI Bot when it detects a trade to copy or counter.
-     * @param market The DreamDEX market address.
-     * @param outcome The YES/NO direction.
+     * @param marketPool The specific DreamDEX BinaryPool address.
+     * @param kind 0=BUY_YES, 1=SELL_YES, 2=BUY_NO, 3=SELL_NO
      * @param amount The size of the trade.
      * @param limitPrice The max price to pay (slippage protection).
      */
     function executeCopyTrade(
-        address market, 
-        uint8 outcome, 
+        address marketPool, 
+        uint8 kind, 
         uint256 amount, 
         uint256 limitPrice
     ) external onlyBot {
@@ -117,13 +95,25 @@ contract CopyTradeVault {
         // Deduct from the bot's allowance
         botAllowance -= amount;
 
-        // Approve the DreamDEX router to spend the vault's tokens
-        tradingToken.safeIncreaseAllowance(address(dreamDexRouter), amount);
+        // Approve the specific binary pool to spend the vault's tokens
+        tradingToken.safeIncreaseAllowance(marketPool, amount);
 
-        // Call the DreamDEX smart contract to place the order
-        // NOTE: Ensure this matches the exact DreamDEX ABI
-        dreamDexRouter.placeOrder(market, outcome, amount, limitPrice);
+        // Execute the trade directly on the specific market pool
+        (bool success, uint128 orderId) = IDreamDexBinaryPool(marketPool).placeBinaryOrder(
+            kind,
+            limitPrice,
+            amount,
+            type(uint64).max, // expireTimestampNs (never expire)
+            0, // orderType (0 = Limit order)
+            0, // selfMatchingOption
+            address(0), // builder (no fee routing for now)
+            0, // builderFeeBpsTimes1k
+            0 // userData
+        );
 
-        emit TradeExecuted(market, outcome, amount);
+        require(success, "Trade failed");
+
+        // Emit the orderId so your Node.js backend can track if it filled
+        emit TradeExecuted(marketPool, kind, amount, orderId);
     }
 }
