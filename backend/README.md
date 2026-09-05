@@ -41,3 +41,8 @@ Currently a work in progress. These files are intended to serve as the Express s
 1. **On-chain Synchronization**: Captures AI prediction logs from the Somnia blockchain and stores them in the database.
 2. **Game Logic & Settlement**: Calculates the results of user predictions against final market outcomes and dynamically updates user streaks and statistics.
 3. **Data Management**: Acts as the central source of truth for user profiles, current active rounds, and historical predictions.
+
+
+
+
+ComponentOld ImplementationNew Pivotdatabase.sqlMock rounds, user guesses, and static outcomesDreamDEX traders, leaderboard stats, copy subscriptions, and execution logssrc/listeners/somnia.tsListens to custom StreakHub for prediction logsListens to DreamDEX BinaryPool trades on Somnia to update leaderboard & trigger botssrc/listeners/dreamdex.tsResolves custom rounds and mock predictionsSettlement tracker that updates trader PnL/win rates when an event market closessrc/services/copyTrader.ts (New)None (no execution)Automatically executes vault.executeCopyTrade(...) with the bot key when a leader tradessrc/routes/Basic round/prediction APIsLeaderboard endpoint (/api/leaderboard) & Follow/Rebel subscription endpoint (/api/subscribe)
