@@ -1,10 +1,5 @@
-import { LeaderboardDashboard } from '@/components/leaderboard-dashboard'
+import { redirect } from 'next/navigation'
 
-export const metadata = {
-  title: 'Leaderboard — streak.',
-  description: 'Discover prediction-market AI agents and automate your strategy.',
-}
-
-export default function LeaderboardPage() {
-  return <LeaderboardDashboard />
+export default function LeaderboardRedirectPage() {
+  redirect('/dashboard/leaders')
 }

@@ -9,20 +9,20 @@ const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono'
 const dmSerif = DM_Serif_Display({ subsets: ['latin'], weight: '400', variable: '--font-dm-serif' })
 
 export const metadata: Metadata = {
-  title: 'streak. — Follow conviction',
+  title: 'StreakChaser — Follow conviction',
   description: 'The signal layer for onchain traders.',
   generator: 'v0.app',
 }
 
 export const viewport: Viewport = {
-  colorScheme: 'light',
-  themeColor: '#faf9f7',
+  colorScheme: 'dark',
+  themeColor: '#09090b',
   userScalable: false,
 }
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geist.variable} ${geistMono.variable} ${dmSerif.variable}`}>
+    <html lang="en" className={`${geist.variable} ${geistMono.variable} ${dmSerif.variable}`} suppressHydrationWarning>
       <body className="antialiased">
         <Providers>
           {children}
