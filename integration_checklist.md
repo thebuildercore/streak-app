@@ -10,16 +10,16 @@ The `CopyTradeVault` acts as the user's non-custodial session-key vault.
 
 - [*] **Export Contract ABI & Address**: Extract the ABI for `CopyTradeVault` and configure it in the frontend and backend environments.
 - [*] **Deploy & Verify**: Ensure `deploy.sol` successfully deploys on Somnia Shannon Testnet and that testnet USDC is properly linked.
-- [ ] **Frontend Write Hooks (User Transactions)**:
-  - [ ] Implement `deposit(uint256 amount)` (Requires prior USDC `approve`).
-  - [ ] Implement `withdraw(uint256 amount)`.
-  - [ ] Implement `authorizeBot(address _bot, uint256 _allowance)` to grant the AI Agent allowance.
-  - [ ] Implement `revokeBot()` for emergency permission removal.
-- [ ] **Backend Bot Write Hooks (Agent Transactions)**:
-  - [ ] Implement `executeCopyTrade(address marketPool, uint8 kind, uint256 amount, uint256 limitPrice)` restricted via the `onlyBot` modifier.
-- [ ] **Event Listeners (Viem / Backend)**:
-  - [ ] Index `Deposited`, `Withdrawn`, `BotAuthorized`, `BotRevoked`.
-  - [ ] Index `TradeExecuted` to track successful copy-trades.
+- [x] **Frontend Write Hooks (User Transactions)**:
+  - [x] Implement `deposit(uint256 amount)` (Requires prior USDC `approve`).
+  - [x] Implement `withdraw(uint256 amount)`.
+  - [x] Implement `authorizeBot(address _bot, uint256 _allowance)` to grant the AI Agent allowance.
+  - [x] Implement `revokeBot()` for emergency permission removal.
+- [x] **Backend Bot Write Hooks (Agent Transactions)**:
+  - [x] Implement `executeCopyTrade(address marketPool, uint8 kind, uint256 amount, uint256 limitPrice)` restricted via the `onlyBot` modifier.
+- [x] **Event Listeners (Viem / Backend)**:
+  - [x] Index `Deposited`, `Withdrawn`, `BotAuthorized`, `BotRevoked`.
+  - [x] Index `TradeExecuted` to track successful copy-trades.
 
 ---
 
@@ -27,15 +27,15 @@ The `CopyTradeVault` acts as the user's non-custodial session-key vault.
 
 The DreamDEX SDK is used to pull live prediction market data and execute binary options trades.
 
-- [ ] **Market Discovery (`/dashboard/events`)**:
-  - [ ] Implement `client.listBinaryMarkets()` or `client.listMarkets()` to display available events.
-  - [ ] Map order book prices to implied odds ($P_{\text{YES}} = \text{Price}$, $P_{\text{NO}} = 1 - P_{\text{YES}}$).
-- [ ] **Live Price Streaming**:
-  - [ ] Utilize the `useLiveOrderBook(poolAddress)` hook for real-time order book updates on the selected event.
-- [ ] **Manual Execution (Frontend Override)**:
-  - [ ] Wire up "Bet YES" / "Bet NO" buttons to `client.placeBinaryOrder(...)` directly from the user's wallet.
-- [ ] **Active Position Tracking**:
-  - [ ] Fetch open position balances (YES/NO tokens) held by the user's `CopyTradeVault` address using SDK or subgraph queries.
+- [x] **Market Discovery (`/dashboard/events`)**:
+  - [x] Implement `client.listBinaryMarkets()` or `client.listMarkets()` to display available events.
+  - [x] Map order book prices to implied odds ($P_{\text{YES}} = \text{Price}$, $P_{\text{NO}} = 1 - P_{\text{YES}}$).
+- [x] **Live Price Streaming**:
+  - [x] Utilize the `useLiveOrderBook(poolAddress)` hook for real-time order book updates on the selected event.
+- [x] **Manual Execution (Frontend Override)**:
+  - [x] Wire up "Bet YES" / "Bet NO" buttons to `client.placeBinaryOrder(...)` directly from the user's wallet.
+- [x] **Active Position Tracking**:
+  - [x] Fetch open position balances (YES/NO tokens) held by the user's `CopyTradeVault` address using SDK or subgraph queries.
 
 ---
 
@@ -44,49 +44,49 @@ The DreamDEX SDK is used to pull live prediction market data and execute binary 
 Integrate UI components with Backend APIs and Smart Contracts across the dashboard.
 
 ### 3.1 Overview Dashboard (`/dashboard`)
-- [ ] **Top Metric Cards**:
-  - [ ] Fetch Vault Balance from contract: `vault.tradingToken.balanceOf(vaultAddress)`.
-  - [ ] Fetch PnL/Win Rate from backend API: `GET /api/user/stats`.
-- [ ] **Live Radar**:
-  - [ ] Fetch Top Performers: `GET /api/leaderboard?filter=top_performers`.
-  - [ ] Fetch Serial Losers: `GET /api/leaderboard?filter=serial_losers`.
-  - [ ] Wire up "Follow" / "Rebel" action modals to POST to `/api/subscribe`.
-- [ ] **Recent Activity Feed**:
-  - [ ] Fetch recent trades: `GET /api/user/executions?limit=5`.
-- [ ] **Market Heatmap**:
-  - [ ] Display live volume data using the DreamDEX SDK.
+- [x] **Top Metric Cards**:
+  - [x] Fetch Vault Balance from contract: `vault.tradingToken.balanceOf(vaultAddress)`.
+  - [x] Fetch PnL/Win Rate from backend API: `GET /api/user/stats`.
+- [x] **Live Radar**:
+  - [x] Fetch Top Performers: `GET /api/leaderboard?filter=top_performers`.
+  - [x] Fetch Serial Losers: `GET /api/leaderboard?filter=serial_losers`.
+  - [x] Wire up "Follow" / "Rebel" action modals to POST to `/api/subscribe`.
+- [x] **Recent Activity Feed**:
+  - [x] Fetch recent trades: `GET /api/user/executions?limit=5`.
+- [x] **Market Heatmap**:
+  - [x] Display live volume data using the DreamDEX SDK.
 
 ### 3.2 My Vault Page (`/dashboard/vault`)
-- [ ] **Balances Panel**:
-  - [ ] Read `Total` and `Available` balances via contract reads.
-  - [ ] Calculate `In Active Positions` from held ERC20 outcome tokens.
-- [ ] **Agent Permissions Card**:
-  - [ ] Read `vault.authorizedBot()` and `vault.botAllowance()`.
-  - [ ] Wire up "Adjust Allowance" slider/button to `authorizeBot`.
-  - [ ] Wire up "Emergency Revoke" button to `revokeBot`.
-- [ ] **Deposit/Withdraw UI**:
-  - [ ] Connect deposit and withdraw modals to contract functions.
+- [x] **Balances Panel**:
+  - [x] Read `Total` and `Available` balances via contract reads.
+  - [x] Calculate `In Active Positions` from held ERC20 outcome tokens.
+- [x] **Agent Permissions Card**:
+  - [x] Read `vault.authorizedBot()` and `vault.botAllowance()`.
+  - [x] Wire up "Adjust Allowance" slider/button to `authorizeBot`.
+  - [x] Wire up "Emergency Revoke" button to `revokeBot`.
+- [x] **Deposit/Withdraw UI**:
+  - [x] Connect deposit and withdraw modals to contract functions.
 
 ### 3.3 AI Agent View (`/dashboard/ai-agent`)
-- [ ] **Strategy Toggles**:
-  - [ ] Implement Follow vs. Rebel toggle calling `PATCH /api/subscribe/mode`.
-- [ ] **Active Strategy Profile**:
-  - [ ] Fetch currently subscribed leader profile from backend `copy_subscriptions`.
-- [ ] **Risk Sizing**:
-  - [ ] Connect "Allocation %" slider to backend/local config for trade sizing.
-- [ ] **Agent Status Metrics**:
-  - [ ] Display real-time execution success rate and PnL.
+- [x] **Strategy Toggles**:
+  - [x] Implement Follow vs. Rebel toggle calling `PATCH /api/subscribe/mode`.
+- [x] **Active Strategy Profile**:
+  - [x] Fetch currently subscribed leader profile from backend `copy_subscriptions`.
+- [x] **Risk Sizing**:
+  - [x] Connect "Allocation %" slider to backend/local config for trade sizing.
+- [x] **Agent Status Metrics**:
+  - [x] Display real-time execution success rate and PnL.
 
 ### 3.4 Events Page (`/dashboard/events`)
-- [ ] **Leaderboard on Event**:
-  - [ ] Fetch event-specific top traders: `GET /api/leaderboard?market_pool=0x...`.
+- [x] **Leaderboard on Event**:
+  - [x] Fetch event-specific top traders: `GET /api/leaderboard?market_pool=0x...`.
 
 ### 3.5 Settings Page (`/dashboard/settings`)
-- [ ] **Automated Risk Controls**:
-  - [ ] Form for Max Drawdown, Max Allocation, and Slippage guardrails.
-  - [ ] Connect form to `POST /api/settings` to save `user_settings`.
-- [ ] **Vault Verification Badge**:
-  - [ ] Display security status based on `vault.authorizedBot() != address(0)`.
+- [x] **Automated Risk Controls**:
+  - [x] Form for Max Drawdown, Max Allocation, and Slippage guardrails.
+  - [x] Connect form to `POST /api/settings` to save `user_settings`.
+- [x] **Vault Verification Badge**:
+  - [x] Display security status based on `vault.authorizedBot() != address(0)`.
 
 ---
 
@@ -94,18 +94,18 @@ Integrate UI components with Backend APIs and Smart Contracts across the dashboa
 
 The Node.js backend handles data indexing and serves data to the frontend.
 
-- [ ] **Database Setup (Supabase)**:
-  - [ ] Ensure schema is deployed for `copy_executions`, `copy_subscriptions`, `user_settings`.
-- [ ] **On-Chain Indexer (Viem)**:
-  - [ ] Listen to DreamDEX Event Contracts for global order placements.
-  - [ ] Calculate user Streaks, Win Rates, and Reputation Scores dynamically.
-- [ ] **API Endpoints Setup**:
-  - [ ] `GET /api/leaderboard` (Global & Pool-specific filters).
-  - [ ] `GET /api/user/stats` (PnL aggregations).
-  - [ ] `GET /api/user/executions` (Trade history).
-  - [ ] `POST /api/subscribe` (Follow/Rebel).
-  - [ ] `PATCH /api/subscribe/mode` (Strategy toggling).
-  - [ ] `POST /api/settings` (Guardrails).
+- [x] **Database Setup (Supabase)**:
+  - [x] Ensure schema is deployed for `copy_executions`, `copy_subscriptions`, `user_settings`.
+- [x] **On-Chain Indexer (Viem)**:
+  - [x] Listen to DreamDEX Event Contracts for global order placements.
+  - [x] Calculate user Streaks, Win Rates, and Reputation Scores dynamically.
+- [x] **API Endpoints Setup**:
+  - [x] `GET /api/leaderboard` (Global & Pool-specific filters).
+  - [x] `GET /api/user/stats` (PnL aggregations).
+  - [x] `GET /api/user/executions` (Trade history).
+  - [x] `POST /api/subscribe` (Follow/Rebel).
+  - [x] `PATCH /api/subscribe/mode` (Strategy toggling).
+  - [x] `POST /api/settings` (Guardrails).
 
 ---
 
@@ -113,15 +113,15 @@ The Node.js backend handles data indexing and serves data to the frontend.
 
 The core autonomous service signing background transactions using the session key.
 
-- [ ] **Event Detection**:
-  - [ ] Backend detects a trade from a followed/rebelled wallet.
-- [ ] **Strategy Resolution**:
-  - [ ] Determine action based on `FOLLOW` (mirror) or `REBEL` (invert).
-- [ ] **Guardrail Checks**:
-  - [ ] Verify trade meets Max Drawdown, Slippage, and Allocation constraints.
-- [ ] **Contract Execution**:
-  - [ ] Bot calls `CopyTradeVault.executeCopyTrade` with the calculated payload.
-  - [ ] Wait for `TradeExecuted` event to mark status as `SUCCESS` in the database.
+- [x] **Event Detection**:
+  - [x] Backend detects a trade from a followed/rebelled wallet.
+- [x] **Strategy Resolution**:
+  - [x] Determine action based on `FOLLOW` (mirror) or `REBEL` (invert).
+- [x] **Guardrail Checks**:
+  - [x] Verify trade meets Max Drawdown, Slippage, and Allocation constraints.
+- [x] **Contract Execution**:
+  - [x] Bot calls `CopyTradeVault.executeCopyTrade` with the calculated payload.
+  - [x] Wait for `TradeExecuted` event to mark status as `SUCCESS` in the database.
 
 
 
@@ -149,7 +149,7 @@ While the backend bot is ready to execute trades and the frontend looks great, t
 
 Here is what you still need to integrate to make it fully functional:
 
-- [ ] **Frontend Data Binding:** Wire up the mocked components (like the `AIVaultSection`) to actually fetch real balances from your `CopyTradeVault` via Wagmi/Viem.
-- [ ] **Web3 Write Transactions:** The "Deposit", "Adjust Allowance", and "Emergency Revoke" buttons in the UI need to be connected to trigger MetaMask signatures.
-- [ ] **Markets SDK Live Feeds:** Replace static heatmap/event data with the `client.listBinaryMarkets()` and `useLiveOrderBook()` hooks from the DreamDEX SDK to stream real implied odds.
-- [ ] **Strategy Modals:** The "Follow Mode" and "Rebel Mode" toggles need to send real `POST` requests to `/api/subscribe` to activate the backend bot.
+- [x] **Frontend Data Binding:** Wire up the mocked components (like the `AIVaultSection`) to actually fetch real balances from your `CopyTradeVault` via Wagmi/Viem.
+- [x] **Web3 Write Transactions:** The "Deposit", "Adjust Allowance", and "Emergency Revoke" buttons in the UI need to be connected to trigger MetaMask signatures.
+- [x] **Markets SDK Live Feeds:** Replace static heatmap/event data with the `client.listBinaryMarkets()` and `useLiveOrderBook()` hooks from the DreamDEX SDK to stream real implied odds.
+- [x] **Strategy Modals:** The "Follow Mode" and "Rebel Mode" toggles need to send real `POST` requests to `/api/subscribe` to activate the backend bot.

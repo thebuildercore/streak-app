@@ -1,21 +1,31 @@
+'use client'
+
 import { Wallet, TrendingUp, Copy, Flame, Target } from 'lucide-react'
+import { useVaultBalance } from '@/lib/hooks/useVault'
+import { useUserStats } from '@/lib/hooks/useApi'
+import { formatCompact } from '@/lib/hooks/usePrices'
+import { useAccount } from 'wagmi'
 
 export function StatCards() {
+  const { address } = useAccount()
+  const { balance, isLoading: balanceLoading } = useVaultBalance()
+  const { data: stats, loading: statsLoading } = useUserStats()
+
   const cards = [
     {
       title: 'Vault Balance',
-      value: '1,245.68',
+      value: balanceLoading ? '...' : formatCompact(balance),
       currency: 'USDC',
-      subtext: '≈ $1,245.68',
+      subtext: `≈ $${balanceLoading ? '...' : formatCompact(balance)}`,
       icon: Wallet,
       color: 'text-[#a1a1aa]',
       valueColor: 'text-white'
     },
     {
       title: 'Total PnL',
-      value: '+245.68',
+      value: statsLoading ? '...' : (Number(stats?.totalVolume || 0) > 0 ? `+${formatCompact(stats?.totalVolume || '0')}` : '0.00'),
       currency: 'USDC',
-      subtext: '+24.56%',
+      subtext: statsLoading ? '...' : 'Lifetime',
       subtextColor: 'text-emerald-500',
       icon: TrendingUp,
       color: 'text-emerald-500',
@@ -23,10 +33,10 @@ export function StatCards() {
       sparkline: 'emerald'
     },
     {
-      title: 'Copying PnL',
-      value: '+198.42',
-      currency: 'USDC',
-      subtext: '+19.84%',
+      title: 'Active Follows',
+      value: statsLoading ? '...' : (stats?.followCount || 0).toString(),
+      currency: 'Agents',
+      subtext: 'Copying positions',
       subtextColor: 'text-emerald-500',
       icon: Copy,
       color: 'text-emerald-500',
@@ -34,10 +44,10 @@ export function StatCards() {
       sparkline: 'emerald'
     },
     {
-      title: 'Rebel PnL',
-      value: '+47.26',
-      currency: 'USDC',
-      subtext: '+47.26%',
+      title: 'Active Rebels',
+      value: statsLoading ? '...' : (stats?.rebelCount || 0).toString(),
+      currency: 'Agents',
+      subtext: 'Inverting positions',
       subtextColor: 'text-emerald-500',
       icon: Flame,
       color: 'text-[#ef4444]',
@@ -46,9 +56,9 @@ export function StatCards() {
     },
     {
       title: 'Win Rate',
-      value: '68.3%',
+      value: statsLoading ? '...' : stats?.winRate || '0.00%',
       currency: '',
-      subtext: 'Total Trades: 127',
+      subtext: `Total Trades: ${stats?.totalTrades || 0}`,
       icon: Target,
       color: 'text-[#a1a1aa]',
       valueColor: 'text-white'

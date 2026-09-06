@@ -11,6 +11,8 @@ import {
   History, 
   Settings 
 } from 'lucide-react'
+import { useVaultBalance } from '@/lib/hooks/useVault'
+import { formatCompact } from '@/lib/hooks/usePrices'
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -24,6 +26,7 @@ const navItems = [
 
 export function Sidebar() {
   const pathname = usePathname()
+  const { balance, isLoading } = useVaultBalance()
 
   return (
     <div className="w-[240px] flex-shrink-0 border-r border-[#222] bg-[#0c0c0c] flex flex-col text-[#a1a1aa] text-sm">
@@ -61,22 +64,21 @@ export function Sidebar() {
         <div className="bg-[#111] border border-[#222] rounded-xl p-4">
           <div className="text-xs text-[#a1a1aa] mb-1">Vault Balance</div>
           <div className="text-xl font-bold text-white flex items-baseline gap-1">
-            $1,245.68
+            {isLoading ? '...' : `$${formatCompact(balance)}`}
             <span className="text-[10px] text-[#71717a] font-normal">USDC</span>
           </div>
-          <button className="w-full mt-3 bg-white hover:bg-gray-200 text-black text-xs font-bold py-2 rounded transition-colors">
+          <Link href="/dashboard/vault" className="w-full mt-3 bg-white hover:bg-gray-200 text-black text-xs font-bold py-2 rounded transition-colors text-center inline-block">
             Deposit
-          </button>
+          </Link>
         </div>
         
-        <button className="flex items-center gap-2 bg-[#111] hover:bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2 text-sm text-white transition-colors w-full justify-center">
+        <button className="flex items-center gap-2 bg-[#111] hover:bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-2 text-sm text-white transition-colors w-full justify-center cursor-default">
           <div className="w-3.5 h-3.5 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
             <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
           </div>
-          <span className="text-xs font-medium">Somnia Mainnet</span>
+          <span className="text-xs font-medium">Somnia Testnet</span>
         </button>
       </div>
     </div>
   )
 }
-

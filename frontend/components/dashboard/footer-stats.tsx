@@ -1,6 +1,15 @@
+'use client'
+
 import { Users, Crosshair, TrendingUp, BarChart2 } from 'lucide-react'
+import { useUserStats } from '@/lib/hooks/useApi'
 
 export function FooterStats() {
+  const { data: stats, loading } = useUserStats()
+  
+  const totalVolume = Number(stats?.totalVolume || 0)
+  const totalTrades = stats?.totalTrades || 0
+  const avgPnl = totalTrades > 0 ? (totalVolume / totalTrades).toFixed(2) : '0.00'
+
   return (
     <div className="bg-[#0c0c0c] border-t border-[#222] mt-auto">
       <div className="flex items-center justify-between px-8 py-3">
@@ -9,7 +18,9 @@ export function FooterStats() {
             <Users size={20} className="text-[#71717a]" />
             <div>
               <div className="text-[10px] text-[#71717a] font-medium uppercase tracking-wider">Total Copied Traders</div>
-              <div className="text-lg font-bold text-emerald-500 leading-tight">4</div>
+              <div className="text-lg font-bold text-emerald-500 leading-tight">
+                {loading ? '...' : stats?.followCount || 0}
+              </div>
             </div>
           </div>
           
@@ -17,7 +28,9 @@ export function FooterStats() {
             <Crosshair size={20} className="text-[#ef4444]" />
             <div>
               <div className="text-[10px] text-[#71717a] font-medium uppercase tracking-wider">Total Rebel Traders</div>
-              <div className="text-lg font-bold text-[#ef4444] leading-tight">2</div>
+              <div className="text-lg font-bold text-[#ef4444] leading-tight">
+                {loading ? '...' : stats?.rebelCount || 0}
+              </div>
             </div>
           </div>
           
@@ -25,7 +38,9 @@ export function FooterStats() {
             <TrendingUp size={20} className="text-[#71717a]" />
             <div>
               <div className="text-[10px] text-[#71717a] font-medium uppercase tracking-wider">Total Trades (All Time)</div>
-              <div className="text-lg font-bold text-white leading-tight">127</div>
+              <div className="text-lg font-bold text-white leading-tight">
+                {loading ? '...' : totalTrades}
+              </div>
             </div>
           </div>
           
@@ -33,7 +48,9 @@ export function FooterStats() {
             <BarChart2 size={20} className="text-[#71717a]" />
             <div>
               <div className="text-[10px] text-[#71717a] font-medium uppercase tracking-wider">Avg. PnL / Trade</div>
-              <div className="text-lg font-bold text-emerald-500 leading-tight">+12.45 <span className="text-[10px] text-[#71717a]">USDC</span></div>
+              <div className={`text-lg font-bold leading-tight ${Number(avgPnl) >= 0 ? 'text-emerald-500' : 'text-[#ef4444]'}`}>
+                {loading ? '...' : `${Number(avgPnl) > 0 ? '+' : ''}${avgPnl}`} <span className="text-[10px] text-[#71717a]">USDC</span>
+              </div>
             </div>
           </div>
         </div>

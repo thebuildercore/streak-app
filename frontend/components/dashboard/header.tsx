@@ -1,4 +1,8 @@
-import { Bell, ChevronDown } from 'lucide-react'
+'use client'
+
+import { Bell } from 'lucide-react'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { PriceTicker } from './price-ticker'
 
 export function DashboardHeader() {
   return (
@@ -20,19 +24,13 @@ export function DashboardHeader() {
       </div>
 
       <div className="flex items-center gap-4">
-        <button className="flex items-center gap-2 bg-[#111] hover:bg-[#1a1a1a] border border-[#333] rounded-full px-4 py-2 text-sm text-white transition-colors">
-          <div className="w-4 h-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-            <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-          </div>
-          Somnia Mainnet
-          <ChevronDown size={16} className="text-[#666] ml-1" />
-        </button>
+        <PriceTicker />
 
-        <button className="flex items-center gap-2 bg-[#111] hover:bg-[#1a1a1a] border border-[#333] rounded-full px-4 py-2 text-sm text-white transition-colors">
-          <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-purple-500 to-orange-500"></div>
-          0x7Af3...8c2D
-          <ChevronDown size={16} className="text-[#666] ml-1" />
-        </button>
+        <ConnectButton
+          chainStatus="icon"
+          accountStatus="address"
+          showBalance={false}
+        />
 
         <button className="relative p-2 text-[#a1a1aa] hover:text-white transition-colors border border-[#333] rounded-full bg-[#111] hover:bg-[#1a1a1a]">
           <Bell size={20} />

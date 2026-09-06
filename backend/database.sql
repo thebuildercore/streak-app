@@ -47,3 +47,12 @@ CREATE TABLE copy_executions (
     status TEXT CHECK (status IN ('SUCCESS', 'FAILED')),
     executed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- 5. User Settings (Risk Guardrails for the AI Agent)
+CREATE TABLE user_settings (
+    user_vault_address TEXT PRIMARY KEY,
+    max_drawdown NUMERIC(5, 2) DEFAULT 15.00,    -- % of vault balance
+    max_allocation NUMERIC DEFAULT 250.00,         -- USDC per signal
+    slippage_tolerance NUMERIC(4, 2) DEFAULT 0.50, -- % slippage allowed
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);

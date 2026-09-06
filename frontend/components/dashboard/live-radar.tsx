@@ -2,28 +2,43 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Crosshair, CheckCircle2 } from 'lucide-react'
+import { Crosshair, CheckCircle2, Loader2 } from 'lucide-react'
+import { useLeaderboard, useSubscriptions } from '@/lib/hooks/useApi'
+import { useAccount } from 'wagmi'
 
 export function LiveRadar() {
   const [activeTab, setActiveTab] = useState<'top' | 'losers'>('top')
+  const { data: topPerformers, loading: topLoading } = useLeaderboard('top_performers')
+  const { data: serialLosers, loading: losersLoading } = useLeaderboard('serial_losers')
+  const { subscribe, unsubscribe, data: subscriptions } = useSubscriptions()
+  const { isConnected } = useAccount()
 
-  const topPerformers = [
-    { rank: 1, name: 'CryptoPhoenix', avatar: 'bg-blue-600', verified: true, winRate: '72.4%', pnl: '+1,245.68', pnlPercent: '+124.56%', followers: '1.2K' },
-    { rank: 2, name: 'EventOracle', avatar: 'bg-purple-600', verified: true, winRate: '68.7%', pnl: '+932.18', pnlPercent: '+93.21%', followers: '892' },
-    { rank: 3, name: 'SomniaWhale', avatar: 'bg-indigo-600', verified: false, winRate: '65.1%', pnl: '+812.45', pnlPercent: '+81.24%', followers: '756' },
-    { rank: 4, name: 'AlphaHunter', avatar: 'bg-emerald-600', verified: true, winRate: '61.3%', pnl: '+623.77', pnlPercent: '+62.37%', followers: '623' },
-    { rank: 5, name: 'BetMaster', avatar: 'bg-fuchsia-600', verified: true, winRate: '59.8%', pnl: '+511.32', pnlPercent: '+51.13%', followers: '511' },
-  ]
-
-  const serialLosers = [
-    { rank: 1, name: 'BadBettor99', avatar: 'bg-red-800', verified: false, winRate: '12.4%', pnl: '-3,245.12', pnlPercent: '-82.4%', followers: '2.1K' },
-    { rank: 2, name: 'RektRider', avatar: 'bg-orange-800', verified: true, winRate: '18.7%', pnl: '-2,932.18', pnlPercent: '-78.2%', followers: '1.5K' },
-    { rank: 3, name: 'PaperHands', avatar: 'bg-yellow-800', verified: false, winRate: '21.1%', pnl: '-1,812.45', pnlPercent: '-65.2%', followers: '890' },
-    { rank: 4, name: 'FomoKing', avatar: 'bg-rose-800', verified: true, winRate: '25.3%', pnl: '-1,623.77', pnlPercent: '-54.3%', followers: '720' },
-    { rank: 5, name: 'DumpDancer', avatar: 'bg-pink-800', verified: false, winRate: '29.8%', pnl: '-1,511.32', pnlPercent: '-48.1%', followers: '610' },
-  ]
+  const [processing, setProcessing] = useState<Record<string, boolean>>({})
 
   const traders = activeTab === 'top' ? topPerformers : serialLosers
+  const isLoading = activeTab === 'top' ? topLoading : losersLoading
+
+  const isSubscribed = (address: string, mode: 'FOLLOW' | 'REBEL') => {
+    return subscriptions.some(s => s.leader_address.toLowerCase() === address.toLowerCase() && s.mode === mode)
+  }
+
+  const handleSubscribe = async (address: string, mode: 'FOLLOW' | 'REBEL') => {
+    if (!isConnected) {
+      alert("Please connect your wallet first")
+      return
+    }
+    
+    setProcessing(prev => ({ ...prev, [address]: true }))
+    
+    if (isSubscribed(address, mode)) {
+      await unsubscribe(address)
+    } else {
+      // Default allocation of 50 USDC for quick subscribe from radar
+      await subscribe(address, mode, '50')
+    }
+    
+    setProcessing(prev => ({ ...prev, [address]: false }))
+  }
 
   return (
     <div className="bg-[#0c0c0c] border border-[#222] rounded-xl flex flex-col h-full">
@@ -55,61 +70,89 @@ export function LiveRadar() {
         </div>
       </div>
 
-      <div className="flex-1 p-2">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-[#71717a] text-xs border-b border-[#222]">
-              <th className="font-normal text-left py-3 px-4 w-12">#</th>
-              <th className="font-normal text-left py-3 px-4">Trader</th>
-              <th className="font-normal text-right py-3 px-4">Win Rate</th>
-              <th className="font-normal text-right py-3 px-4">PnL (7D)</th>
-              <th className="font-normal text-right py-3 px-4">Followers</th>
-              <th className="font-normal text-center py-3 px-4">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {traders.map((trader) => (
-              <tr key={trader.name} className="border-b border-[#222]/50 hover:bg-[#111] transition-colors agent-row group">
-                <td className="py-3 px-4">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                    trader.rank === 1 ? 'bg-yellow-500/20 text-yellow-500' : 
-                    trader.rank === 2 ? 'bg-gray-400/20 text-gray-400' : 
-                    trader.rank === 3 ? 'bg-amber-600/20 text-amber-600' : 'text-[#71717a]'
-                  }`}>
-                    {trader.rank}
-                  </div>
-                </td>
-                <td className="py-3 px-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-full ${trader.avatar} flex items-center justify-center overflow-hidden border border-[#333]`}>
-                      <span className="text-[10px] text-white font-bold">{trader.name.substring(0, 2).toUpperCase()}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 text-white font-medium">
-                      {trader.name}
-                      {trader.verified && <CheckCircle2 size={14} className="text-emerald-500" />}
-                    </div>
-                  </div>
-                </td>
-                <td className="py-3 px-4 text-right text-[#a1a1aa] font-medium">{trader.winRate}</td>
-                <td className="py-3 px-4 text-right">
-                  <div className={`font-medium ${activeTab === 'top' ? 'text-emerald-500' : 'text-[#ef4444]'}`}>{trader.pnl} USDC</div>
-                  <div className={`${activeTab === 'top' ? 'text-emerald-500/70' : 'text-[#ef4444]/70'} text-[10px]`}>{trader.pnlPercent}</div>
-                </td>
-                <td className="py-3 px-4 text-right text-[#a1a1aa]">{trader.followers}</td>
-                <td className="py-3 px-4">
-                  <div className="flex items-center justify-center gap-2">
-                    <button className="px-3 py-1.5 text-xs font-medium bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white border border-emerald-500/20 rounded transition-colors">
-                      Follow
-                    </button>
-                    <button className="px-3 py-1.5 text-xs font-medium bg-[#ef4444]/10 text-[#ef4444] hover:bg-[#ef4444] hover:text-white border border-[#ef4444]/20 rounded transition-colors">
-                      Rebel
-                    </button>
-                  </div>
-                </td>
+      <div className="flex-1 p-2 relative min-h-[300px]">
+        {isLoading ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Loader2 className="w-6 h-6 animate-spin text-[#71717a]" />
+          </div>
+        ) : traders.length === 0 ? (
+          <div className="absolute inset-0 flex items-center justify-center text-sm text-[#71717a]">
+            No traders found
+          </div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-[#71717a] text-xs border-b border-[#222]">
+                <th className="font-normal text-left py-3 px-4 w-12">#</th>
+                <th className="font-normal text-left py-3 px-4">Trader</th>
+                <th className="font-normal text-right py-3 px-4">Win Rate</th>
+                <th className="font-normal text-right py-3 px-4">Reputation</th>
+                <th className="font-normal text-center py-3 px-4">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {traders.slice(0, 5).map((trader, idx) => {
+                const rank = idx + 1
+                const isFollowed = isSubscribed(trader.address, 'FOLLOW')
+                const isRebelled = isSubscribed(trader.address, 'REBEL')
+                const isBusy = processing[trader.address]
+
+                return (
+                  <tr key={trader.address} className="border-b border-[#222]/50 hover:bg-[#111] transition-colors agent-row group">
+                    <td className="py-3 px-4">
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                        rank === 1 ? 'bg-yellow-500/20 text-yellow-500' : 
+                        rank === 2 ? 'bg-gray-400/20 text-gray-400' : 
+                        rank === 3 ? 'bg-amber-600/20 text-amber-600' : 'text-[#71717a]'
+                      }`}>
+                        {rank}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center overflow-hidden border border-[#333]`}>
+                          <span className="text-[10px] text-white font-bold">{trader.address.substring(2, 4).toUpperCase()}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-white font-medium">
+                          {trader.address.substring(0, 6)}...{trader.address.substring(38)}
+                          {trader.reputation_score > 500 && <CheckCircle2 size={14} className="text-emerald-500" />}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-right text-[#a1a1aa] font-medium">{trader.win_rate}%</td>
+                    <td className="py-3 px-4 text-right text-white font-mono">{trader.reputation_score}</td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center justify-center gap-2">
+                        <button 
+                          disabled={isBusy || (isRebelled && !isFollowed)}
+                          onClick={() => handleSubscribe(trader.address, 'FOLLOW')}
+                          className={`px-3 py-1.5 text-xs font-medium border rounded transition-colors disabled:opacity-50 ${
+                            isFollowed 
+                              ? 'bg-emerald-500 text-white border-emerald-500' 
+                              : 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white border-emerald-500/20'
+                          }`}
+                        >
+                          {isBusy ? <Loader2 size={14} className="animate-spin" /> : isFollowed ? 'Following' : 'Follow'}
+                        </button>
+                        <button 
+                          disabled={isBusy || (isFollowed && !isRebelled)}
+                          onClick={() => handleSubscribe(trader.address, 'REBEL')}
+                          className={`px-3 py-1.5 text-xs font-medium border rounded transition-colors disabled:opacity-50 ${
+                            isRebelled
+                              ? 'bg-[#ef4444] text-white border-[#ef4444]'
+                              : 'bg-[#ef4444]/10 text-[#ef4444] hover:bg-[#ef4444] hover:text-white border-[#ef4444]/20'
+                          }`}
+                        >
+                          {isBusy ? <Loader2 size={14} className="animate-spin" /> : isRebelled ? 'Rebelling' : 'Rebel'}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
 
       <div className="p-3 border-t border-[#222] text-center">
