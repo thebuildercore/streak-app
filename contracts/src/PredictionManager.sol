@@ -3,17 +3,18 @@ pragma solidity ^0.8.24;
 
 import {IPredictionManager} from "./interfaces/IPredictionManager.sol";
 import {IReputationManager} from "./interfaces/IReputationManager.sol";
+import {IDreamDEXEventContract} from "./interfaces/IDreamDEXEventContract.sol";
 
 contract PredictionManager is IPredictionManager {
     uint8 public constant MAX_CONFIDENCE = 100;
 
     error ZeroAddress();
-    error InvalidMarket();
+    error InvalidEvent();
     error InvalidConfidence();
     error Unauthorized();
     error PredictionNotFound();
     error PredictionAlreadyResolved();
-    error ResolverAlreadyConfigured();
+    error EventContractAlreadyConfigured();
     error ReputationAlreadyConfigured();
 
     struct Prediction {
@@ -26,7 +27,7 @@ contract PredictionManager is IPredictionManager {
     }
 
     address public owner;
-    address public marketResolver;
+    IDreamDEXEventContract public eventContract;
     IReputationManager public reputationManager;
     uint256 public nextPredictionId = 1;
 
@@ -44,7 +45,7 @@ contract PredictionManager is IPredictionManager {
     event PredictionResolved(
         uint256 indexed predictionId, address indexed user, uint256 indexed marketId, ResolutionStatus status
     );
-    event MarketResolverSet(address indexed resolver);
+    event EventContractSet(address indexed eventContract);
     event ReputationManagerSet(address indexed reputationManager);
 
     modifier onlyOwner() {
@@ -52,8 +53,8 @@ contract PredictionManager is IPredictionManager {
         _;
     }
 
-    modifier onlyMarketResolver() {
-        if (msg.sender != marketResolver) revert Unauthorized();
+    modifier onlyEventContract() {
+        if (msg.sender != address(eventContract)) revert Unauthorized();
         _;
     }
 
@@ -62,11 +63,11 @@ contract PredictionManager is IPredictionManager {
         owner = initialOwner;
     }
 
-    function setMarketResolver(address resolver) external onlyOwner {
-        if (resolver == address(0)) revert ZeroAddress();
-        if (marketResolver != address(0)) revert ResolverAlreadyConfigured();
-        marketResolver = resolver;
-        emit MarketResolverSet(resolver);
+    function setEventContract(address contractAddress) external onlyOwner {
+        if (contractAddress == address(0)) revert ZeroAddress();
+        if (address(eventContract) != address(0)) revert EventContractAlreadyConfigured();
+        eventContract = IDreamDEXEventContract(contractAddress);
+        emit EventContractSet(contractAddress);
     }
 
     function setReputationManager(address manager) external onlyOwner {
@@ -76,32 +77,32 @@ contract PredictionManager is IPredictionManager {
         emit ReputationManagerSet(manager);
     }
 
-    function createPrediction(uint256 marketId, bool prediction, uint8 confidence)
+    function createPrediction(uint256 eventId, bool prediction, uint8 confidence)
         external
         returns (uint256 predictionId)
     {
-        if (marketResolver == address(0) || !IMarketResolverView(marketResolver).isMarketOpen(marketId)) {
-            revert InvalidMarket();
+        if (address(eventContract) == address(0) || !eventContract.isEventOpen(eventId)) {
+            revert InvalidEvent();
         }
         if (confidence > MAX_CONFIDENCE) revert InvalidConfidence();
 
         predictionId = nextPredictionId++;
         predictions[predictionId] = Prediction({
             user: msg.sender,
-            marketId: marketId,
+            marketId: eventId,
             prediction: prediction,
             confidence: confidence,
             timestamp: uint64(block.timestamp),
             status: ResolutionStatus.Pending
         });
-        marketPredictionIds[marketId].push(predictionId);
+        marketPredictionIds[eventId].push(predictionId);
 
         if (address(reputationManager) != address(0)) reputationManager.recordPrediction(msg.sender);
-        emit PredictionCreated(predictionId, msg.sender, marketId, prediction, confidence, block.timestamp);
+        emit PredictionCreated(predictionId, msg.sender, eventId, prediction, confidence, block.timestamp);
     }
 
-    function resolveMarket(uint256 marketId, bool outcome) external onlyMarketResolver {
-        uint256[] storage ids = marketPredictionIds[marketId];
+    function resolveEvent(uint256 eventId, bool outcome) external onlyEventContract {
+        uint256[] storage ids = marketPredictionIds[eventId];
         for (uint256 i; i < ids.length; ++i) {
             Prediction storage item = predictions[ids[i]];
             if (item.status != ResolutionStatus.Pending) revert PredictionAlreadyResolved();
@@ -109,7 +110,7 @@ contract PredictionManager is IPredictionManager {
             if (address(reputationManager) != address(0)) {
                 reputationManager.recordResult(item.user, item.status == ResolutionStatus.Win);
             }
-            emit PredictionResolved(ids[i], item.user, marketId, item.status);
+            emit PredictionResolved(ids[i], item.user, eventId, item.status);
         }
     }
 
@@ -135,6 +136,3 @@ contract PredictionManager is IPredictionManager {
     }
 }
 
-interface IMarketResolverView {
-    function isMarketOpen(uint256 marketId) external view returns (bool);
-}

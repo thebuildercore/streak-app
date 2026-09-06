@@ -8,7 +8,7 @@ Streak is an onchain reputation layer for prediction and event markets. It recor
 Human / AI / Bot Wallet -> PredictionManager -> Immutable Prediction
                                             ^                 |
                                             |                 v
-                                   MarketResolver ------ WIN / LOSS
+                              DreamDEX Event Contract ------ WIN / LOSS
                                                                  |
                                                                  v
                                                       ReputationManager
@@ -17,10 +17,10 @@ Human / AI / Bot Wallet -> PredictionManager -> Immutable Prediction
 ## Contracts and lifecycle
 
 - `PredictionManager.sol` accepts predictions from any wallet, stores the historical record, and resolves each prediction exactly once. There is intentionally no edit or delete function.
-- `MarketResolver.sol` creates markets and stores outcomes. Only its owner can create or resolve markets in this MVP. It is the boundary for a future decentralized oracle, but is not one today.
+- `PredictionManager.sol` uses DreamDEX event IDs as the prediction keys. The configured DreamDEX Event Contract controls event openness and is the only contract allowed to settle an event.
 - `ReputationManager.sol` accepts accounting calls only from `PredictionManager` and maintains totals, wins, losses, current streak, and best streak.
 
-The owner creates a market with a future close time. Any wallet submits a YES/NO value and confidence from 0 to 100 while it is open. After closure, the authorized resolver submits the outcome once; pending predictions become `Win` or `Loss`, and reputation accounting is updated. The wallet address may represent a human, AI agent, bot, or DAO.
+DreamDEX creates and settles the event. Any wallet submits a YES/NO value and confidence from 0 to 100 while the event is open. Once DreamDEX settles it, pending predictions become `Win` or `Loss`, and reputation accounting is updated. The wallet address may represent a human, AI agent, bot, or DAO.
 
 ## Reputation formula
 
@@ -38,9 +38,9 @@ Accuracy contributes up to 7,000 points, resolved volume up to 2,000, and curren
 
 User, market ID, direction, confidence, timestamp, and prediction ID are never modified after creation. No method deletes or replaces a prediction, so losing records cannot be cherry-picked. Essential state is stored onchain, with `PredictionCreated`, `PredictionResolved`, `MarketCreated`, `MarketResolved`, and `ReputationUpdated` events for indexers.
 
-Owner-only market resolution, module-specific authorization, one-time dependency configuration, zero-address checks, market validation, confidence bounds, and duplicate-resolution checks protect the core flow. No funds or untrusted callbacks are handled, so reentrancy protection is unnecessary here.
+Module-specific authorization, one-time dependency configuration, zero-address checks, DreamDEX event validation, confidence bounds, and duplicate-resolution checks protect the core flow. No funds or untrusted callbacks are handled, so reentrancy protection is unnecessary here.
 
-The resolver owner is a centralized MVP authority. Production use requires an audited or decentralized oracle, proof verification, disputes, liveness guarantees, key management, and a security audit. This code is not production-ready.
+The configured DreamDEX Event Contract is an external trust boundary. Production use requires verifying the official DreamDEX deployment address and interface for the target chain, plus an audit of the integration. This code is not production-ready.
 
 ## Development and deployment
 
@@ -62,4 +62,4 @@ source .env
 forge script script/Deploy.s.sol:Deploy --rpc-url "$RPC_URL" --broadcast
 ```
 
-The deployment script deploys all three contracts and connects dependencies in one broadcast. A future oracle can preserve the `resolveMarket` boundary while adding quorum, proof, and dispute logic. Indexers, leaderboards, and analytics should consume these contracts without adding frontend behavior here.
+The deployment script deploys `PredictionManager` and `ReputationManager`, then connects them to the existing DreamDEX Event Contract supplied through `DREAMDEX_EVENT_CONTRACT`. Indexers, leaderboards, and analytics should consume DreamDEX and Streak events without adding a second market lifecycle here.

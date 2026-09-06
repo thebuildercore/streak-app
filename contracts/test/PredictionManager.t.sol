@@ -3,34 +3,34 @@ pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
 import {PredictionManager} from "../src/PredictionManager.sol";
-import {MarketResolver} from "../src/MarketResolver.sol";
 import {ReputationManager} from "../src/ReputationManager.sol";
 import {IPredictionManager} from "../src/interfaces/IPredictionManager.sol";
+import {MockDreamDEXEventContract} from "./mocks/MockDreamDEXEventContract.sol";
 
 contract PredictionManagerTest is Test {
     PredictionManager internal predictions;
-    MarketResolver internal resolver;
+    MockDreamDEXEventContract internal eventContract;
     ReputationManager internal reputation;
     address internal alice = address(0xA11CE);
 
     function setUp() public {
         predictions = new PredictionManager(address(this));
-        resolver = new MarketResolver(address(this));
+        eventContract = new MockDreamDEXEventContract();
         reputation = new ReputationManager(address(this));
-        predictions.setMarketResolver(address(resolver));
+        predictions.setEventContract(address(eventContract));
         predictions.setReputationManager(address(reputation));
         reputation.setPredictionManager(address(predictions));
-        resolver.setPredictionManager(address(predictions));
+        eventContract.setEventOpen(1, true);
     }
 
-    function _market() internal returns (uint256) {
-        return resolver.createMarket(uint64(block.timestamp + 1 days));
+    function _eventId() internal pure returns (uint256) {
+        return 1;
     }
 
     function testCreatePredictionStoresImmutableFields() public {
-        uint256 marketId = _market();
+        uint256 eventId = _eventId();
         vm.prank(alice);
-        uint256 id = predictions.createPrediction(marketId, true, 80);
+        uint256 id = predictions.createPrediction(eventId, true, 80);
         (
             address user,
             uint256 storedMarket,
@@ -41,7 +41,7 @@ contract PredictionManagerTest is Test {
         ) = predictions.getPrediction(id);
         assertEq(id, 1);
         assertEq(user, alice);
-        assertEq(storedMarket, marketId);
+        assertEq(storedMarket, eventId);
         assertTrue(value);
         assertEq(confidence, 80);
         assertEq(timestamp, uint64(block.timestamp));
@@ -49,53 +49,51 @@ contract PredictionManagerTest is Test {
     }
 
     function testInvalidConfidenceReverts() public {
-        uint256 marketId = _market();
+        uint256 eventId = _eventId();
         vm.prank(alice);
         vm.expectRevert(PredictionManager.InvalidConfidence.selector);
-        predictions.createPrediction(marketId, false, 101);
+        predictions.createPrediction(eventId, false, 101);
     }
 
-    function testInvalidMarketReverts() public {
+    function testInvalidEventReverts() public {
         vm.prank(alice);
-        vm.expectRevert(PredictionManager.InvalidMarket.selector);
+        vm.expectRevert(PredictionManager.InvalidEvent.selector);
         predictions.createPrediction(999, true, 50);
     }
 
     function testPredictionIdIncrements() public {
-        uint256 marketId = _market();
+        uint256 eventId = _eventId();
         vm.prank(alice);
-        assertEq(predictions.createPrediction(marketId, true, 1), 1);
+        assertEq(predictions.createPrediction(eventId, true, 1), 1);
         vm.prank(address(0xB));
-        assertEq(predictions.createPrediction(marketId, false, 2), 2);
+        assertEq(predictions.createPrediction(eventId, false, 2), 2);
     }
 
     function testResolutionAndUnauthorizedAccess() public {
-        uint256 marketId = _market();
+        uint256 eventId = _eventId();
         vm.prank(alice);
-        predictions.createPrediction(marketId, true, 90);
-        vm.warp(block.timestamp + 1 days);
+        predictions.createPrediction(eventId, true, 90);
         vm.prank(address(0xBAD));
         vm.expectRevert(PredictionManager.Unauthorized.selector);
-        predictions.resolveMarket(marketId, true);
-        resolver.resolveMarket(marketId, true);
+        predictions.resolveEvent(eventId, true);
+        eventContract.settleEvent(address(predictions), eventId, true);
         (,,,,, IPredictionManager.ResolutionStatus status) = predictions.getPrediction(1);
         assertEq(uint8(status), uint8(IPredictionManager.ResolutionStatus.Win));
     }
 
     function testCannotResolveTwice() public {
-        uint256 marketId = _market();
+        uint256 eventId = _eventId();
         vm.prank(alice);
-        predictions.createPrediction(marketId, true, 90);
-        vm.warp(block.timestamp + 1 days);
-        resolver.resolveMarket(marketId, false);
-        vm.expectRevert(MarketResolver.AlreadyResolved.selector);
-        resolver.resolveMarket(marketId, true);
+        predictions.createPrediction(eventId, true, 90);
+        eventContract.settleEvent(address(predictions), eventId, false);
+        vm.expectRevert(PredictionManager.PredictionAlreadyResolved.selector);
+        eventContract.settleEvent(address(predictions), eventId, true);
     }
 
     function testFuzzConfidenceAtOrBelowMaximum(uint8 confidence) public {
-        uint256 marketId = _market();
+        uint256 eventId = _eventId();
         vm.assume(confidence <= 100);
         vm.prank(alice);
-        predictions.createPrediction(marketId, true, confidence);
+        predictions.createPrediction(eventId, true, confidence);
     }
 }

@@ -3,34 +3,33 @@ pragma solidity ^0.8.24;
 
 import {Test} from "forge-std/Test.sol";
 import {PredictionManager} from "../src/PredictionManager.sol";
-import {MarketResolver} from "../src/MarketResolver.sol";
 import {ReputationManager} from "../src/ReputationManager.sol";
+import {MockDreamDEXEventContract} from "./mocks/MockDreamDEXEventContract.sol";
 
 contract IntegrationTest is Test {
     PredictionManager internal predictions;
-    MarketResolver internal resolver;
+    MockDreamDEXEventContract internal eventContract;
     ReputationManager internal reputation;
     address internal alice = address(0xA11CE);
     address internal bob = address(0xB0B);
 
     function setUp() public {
         predictions = new PredictionManager(address(this));
-        resolver = new MarketResolver(address(this));
+        eventContract = new MockDreamDEXEventContract();
         reputation = new ReputationManager(address(this));
-        predictions.setMarketResolver(address(resolver));
+        predictions.setEventContract(address(eventContract));
         predictions.setReputationManager(address(reputation));
         reputation.setPredictionManager(address(predictions));
-        resolver.setPredictionManager(address(predictions));
+        eventContract.setEventOpen(1, true);
     }
 
     function testMultipleUsersRemainIndependent() public {
-        uint256 marketId = resolver.createMarket(uint64(block.timestamp + 1 days));
+        uint256 eventId = 1;
         vm.prank(alice);
-        predictions.createPrediction(marketId, true, 80);
+        predictions.createPrediction(eventId, true, 80);
         vm.prank(bob);
-        predictions.createPrediction(marketId, false, 80);
-        vm.warp(block.timestamp + 1 days);
-        resolver.resolveMarket(marketId, true);
+        predictions.createPrediction(eventId, false, 80);
+        eventContract.settleEvent(address(predictions), eventId, true);
 
         (uint256 aliceTotal, uint256 aliceWins, uint256 aliceLosses,,) = reputation.getUserStats(alice);
         (uint256 bobTotal, uint256 bobWins, uint256 bobLosses,,) = reputation.getUserStats(bob);
