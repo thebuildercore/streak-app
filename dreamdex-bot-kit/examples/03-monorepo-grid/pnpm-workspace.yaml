@@ -1,5 +1,0 @@
-packages:
-  - 'packages/*'
-  - 'bots/*'
-  - 'apps/*'
-  - 'scripts'
