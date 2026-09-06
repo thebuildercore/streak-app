@@ -1,0 +1,11 @@
+# Railway config for the dreamBot worker template (docs/railway.md).
+# https://docs.railway.com/reference/config-as-code
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "node scripts/railway-start.mjs"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10

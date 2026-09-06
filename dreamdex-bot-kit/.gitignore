@@ -1,0 +1,31 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.cache/
+
+# secrets & local state — never commit these
+.env
+.env.*
+!.env.example
+!.env.railway
+*.key
+keystore.json
+.state/
+logs/
+artifacts/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# os
+.DS_Store
+
+# local Cursor rules
+.cursor/
+
+# python build artifacts
+*.egg-info/
+.pytest_cache/

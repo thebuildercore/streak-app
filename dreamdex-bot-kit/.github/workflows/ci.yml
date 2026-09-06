@@ -1,0 +1,81 @@
+# CI for dreamdex-bot-kit.
+#
+# Two jobs:
+#   - docker-build:      builds the Railway worker image (Dockerfile) so PRs that
+#                        touch the deploy artifact prove it still builds.
+#   - install-and-check: npm ci (runs the postinstall build) + typecheck across
+#                        the npm workspaces.
+#
+# The repo uses npm workspaces with a committed package-lock.json, and the
+# Dockerfile installs via `npm ci`, so npm is the package manager here.
+
+name: Bot kit CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Least privilege: CI only needs to read the repo.
+permissions:
+  contents: read
+
+# Cancel superseded runs on the same ref (e.g. new push to a PR branch).
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Builds the Railway deploy image the PR introduces. This is the core check:
+  # if the worker image can't build, the Railway one-click deploy is broken.
+  docker-build:
+    name: docker build (railway worker image)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build worker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          load: false
+          tags: dreamdex-bot-worker:ci
+          # GitHub Actions layer cache to keep rebuilds fast.
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Installs dependencies and runs static checks that actually exist as scripts.
+  # `npm ci` triggers the postinstall build; `npm run typecheck` builds core and
+  # runs `tsc --noEmit` across the workspaces (no lint/test scripts exist yet).
+  install-and-check:
+    name: install & typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # Rules typecheck cannot see: a strategy missing from the Railway
+      # allow-list, a knob absent from .env.example, an address that drifted
+      # from the published table. No network, about a second.
+      - name: Consistency checks
+        run: npm run check

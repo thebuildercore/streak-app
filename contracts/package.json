@@ -1,0 +1,26 @@
+{
+  "name": "contracts",
+  "version": "1.0.0",
+  "description": "Streak is an onchain reputation layer for prediction and event markets. It records a permanent prediction before market closure, links it to an authorized market outcome, and derives a transparent track record of wins, losses, and streaks.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.2",
+    "dotenv": "^17.4.2",
+    "hardhat": "^2.29.1"
+  },
+  "type": "module",
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.6.1",
+    "openzeppelin-contracts": "npm:@openzeppelin/contracts@^5.6.1"
+  }
+}
