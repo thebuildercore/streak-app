@@ -31,7 +31,7 @@ export const somniaTestnet = {
 export const VAULT_ADDRESS = (process.env.NEXT_PUBLIC_VAULT_ADDRESS || '0xFE262580a526E4311970c92aE690650Fcbd79aD7') as `0x${string}`
 export const USDC_ADDRESS = (process.env.NEXT_PUBLIC_TESTNET_USDC || '0xE9CC37904875B459Fa5D0FE37680d36F1ED55e38') as `0x${string}`
 export const BOT_ADDRESS = (process.env.NEXT_PUBLIC_BOT_ADDRESS || '0xb297dcAD8Ca491b2c27401Cf5f1d99C73b392F46') as `0x${string}`
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api'
 
 // Wagmi + RainbowKit config
 export const config = getDefaultConfig({
