@@ -4,9 +4,9 @@ import { useState } from 'react'
 import { ChevronDown, Sun, ShieldCheck, DollarSign, Wallet, Lock, ShieldAlert, LockKeyhole, Loader2 } from 'lucide-react'
 import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useAccount } from 'wagmi'
-import { 
-  useVaultBalance, 
-  useUserUsdcBalance, 
+import {
+  useVaultBalance,
+  useUserUsdcBalance,
   useAuthorizedBot,
   useDeposit,
   useWithdraw,
@@ -20,7 +20,7 @@ export default function VaultPage() {
   const { balance: vaultBalance, isLoading: vaultLoading } = useVaultBalance()
   const { balance: userBalance } = useUserUsdcBalance(address)
   const { botAddress, allowance, isActive, isLoading: botLoading } = useAuthorizedBot()
-  
+
   const { deposit, step: depositStep, isPending: depositPending, error: depositError } = useDeposit()
   const { withdraw, isPending: withdrawPending, error: withdrawError } = useWithdraw()
   const { authorize, isPending: authorizePending } = useAuthorizeBot()
@@ -35,6 +35,7 @@ export default function VaultPage() {
     await deposit(depositAmount)
     setDepositAmount('')
   }
+
 
   const handleWithdraw = async () => {
     if (!withdrawAmount || isNaN(Number(withdrawAmount))) return
@@ -77,7 +78,7 @@ export default function VaultPage() {
           {/* Balances Section */}
           <div className="bg-[#0c0c0c] border border-[#222] rounded-2xl p-6">
             <h2 className="text-sm font-bold text-white mb-6">Balances</h2>
-            
+
             <div className="grid grid-cols-3 gap-4">
               <div className="bg-[#111] border border-[#222] rounded-xl p-5 flex justify-between items-start">
                 <div>
@@ -111,6 +112,7 @@ export default function VaultPage() {
                 </div>
               </div>
 
+
               <div className="bg-[#111] border border-[#222] rounded-xl p-5 flex justify-between items-start">
                 <div>
                   <div className="text-[#71717a] text-xs mb-2">In Active Positions</div>
@@ -130,19 +132,19 @@ export default function VaultPage() {
           {/* Agent Permissions Section */}
           <div className="bg-[#0c0c0c] border border-[#222] rounded-2xl p-6">
             <h2 className="text-sm font-bold text-white mb-6">Agent Permissions</h2>
-            
+
             <div className="flex items-start justify-between mb-8">
               <div>
                 <div className="text-[#71717a] text-[10px] uppercase tracking-wider mb-2">Authorized Agent</div>
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-full border flex items-center justify-center ${isVerified ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-[#333] bg-[#111]'}`}>
                     <svg viewBox="0 0 24 24" className={`w-5 h-5 ${isVerified ? 'text-emerald-500' : 'text-[#71717a]'}`} fill="currentColor">
-                      <path d="M12 2a2 2 0 0 1 2 2v2h3a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-2.5l-1.5 1.5c-.3.3-.7.5-1.1.5s-.8-.2-1.1-.5l-1.5-1.5H7a3 3 0 0 1-3-3v-8a3 3 0 0 1 3-3h3V4a2 2 0 0 1 2-2zm0 2a.5.5 0 0 0-.5.5V6h1V4.5A.5.5 0 0 0 12 4zM7 8a1.5 1.5 0 0 0-1.5 1.5v8A1.5 1.5 0 0 0 7 19h2.9c.2 0 .4.1.6.2l1.5 1.5c.1.1.2.1.2.1h-.3l1.5-1.5c.2-.2.4-.3.6-.3H17a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 17 8H7zm2.5 3a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm5 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/>
+                      <path d="M12 2a2 2 0 0 1 2 2v2h3a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3h-2.5l-1.5 1.5c-.3.3-.7.5-1.1.5s-.8-.2-1.1-.5l-1.5-1.5H7a3 3 0 0 1-3-3v-8a3 3 0 0 1 3-3h3V4a2 2 0 0 1 2-2zm0 2a.5.5 0 0 0-.5.5V6h1V4.5A.5.5 0 0 0 12 4zM7 8a1.5 1.5 0 0 0-1.5 1.5v8A1.5 1.5 0 0 0 7 19h2.9c.2 0 .4.1.6.2l1.5 1.5c.1.1.2.1.2.1h-.3l1.5-1.5c.2-.2.4-.3.6-.3H17a1.5 1.5 0 0 0 1.5-1.5v-8A1.5 1.5 0 0 0 17 8H7zm2.5 3a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3zm5 0a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z" />
                     </svg>
                   </div>
                   <div>
                     <div className="flex items-center gap-1.5 font-bold text-white text-sm">
-                      StreakChaser AI Bot 
+                      StreakChaser AI Bot
                     </div>
                     <div className="text-[10px] text-[#71717a] mt-0.5">
                       {botLoading ? '...' : botAddress === '0x0000000000000000000000000000000000000000' ? 'Not Authorized' : botAddress}
@@ -161,8 +163,8 @@ export default function VaultPage() {
                     <span className="text-xs text-white font-medium">USDC</span>
                   </div>
                 </div>
-                
-                <button 
+
+                <button
                   onClick={revoke}
                   disabled={revokePending || !isVerified}
                   className="flex items-center gap-2 bg-[#ef4444]/10 hover:bg-[#ef4444]/20 text-[#ef4444] border border-[#ef4444]/30 px-4 py-2 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
@@ -176,7 +178,7 @@ export default function VaultPage() {
             <div className="mb-2 text-xs text-[#a1a1aa]">Adjust Allowance</div>
             <div className="flex items-center gap-6">
               <div className="flex-1 relative pt-2">
-                <input 
+                <input
                   type="range"
                   min="0"
                   max="10000"
@@ -191,15 +193,15 @@ export default function VaultPage() {
               </div>
               <div className="flex gap-2">
                 <div className="w-32 bg-[#111] border border-[#333] rounded-lg px-3 py-2 flex items-center justify-between self-start">
-                  <input 
-                    type="number" 
-                    value={allowanceInput || allowance} 
+                  <input
+                    type="number"
+                    value={allowanceInput || allowance}
                     onChange={(e) => setAllowanceInput(e.target.value)}
                     className="bg-transparent text-white text-xs w-full focus:outline-none"
                   />
                   <span className="text-[10px] text-[#71717a]">USDC</span>
                 </div>
-                <button 
+                <button
                   onClick={handleAuthorize}
                   disabled={authorizePending}
                   className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 rounded-lg text-xs font-bold transition-colors disabled:opacity-50 flex items-center justify-center min-w-[80px]"
@@ -215,9 +217,9 @@ export default function VaultPage() {
             <div className="bg-[#0c0c0c] border border-[#222] rounded-2xl p-6">
               <h2 className="text-sm font-bold text-white mb-4">Deposit USDC</h2>
               <div className="bg-[#111] border border-[#333] rounded-lg p-3 mb-2 flex items-center justify-between">
-                <input 
-                  type="number" 
-                  placeholder="0.00" 
+                <input
+                  type="number"
+                  placeholder="0.00"
                   value={depositAmount}
                   onChange={(e) => setDepositAmount(e.target.value)}
                   className="bg-transparent text-white w-full focus:outline-none text-sm placeholder:text-[#333]"
@@ -228,7 +230,7 @@ export default function VaultPage() {
                 <span>Wallet Balance: {parseFloat(userBalance).toFixed(2)} USDC</span>
                 {depositError && <span className="text-[#ef4444] truncate max-w-[150px]" title={depositError}>{depositError}</span>}
               </div>
-              <button 
+              <button
                 onClick={handleDeposit}
                 disabled={depositPending || !depositAmount}
                 className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 rounded-lg transition-colors text-sm disabled:opacity-50 flex items-center justify-center gap-2"
@@ -241,9 +243,9 @@ export default function VaultPage() {
             <div className="bg-[#0c0c0c] border border-[#222] rounded-2xl p-6">
               <h2 className="text-sm font-bold text-white mb-4">Withdraw USDC</h2>
               <div className="bg-[#111] border border-[#333] rounded-lg p-3 mb-2 flex items-center justify-between">
-                <input 
-                  type="number" 
-                  placeholder="0.00" 
+                <input
+                  type="number"
+                  placeholder="0.00"
                   value={withdrawAmount}
                   onChange={(e) => setWithdrawAmount(e.target.value)}
                   className="bg-transparent text-white w-full focus:outline-none text-sm placeholder:text-[#333]"
@@ -254,7 +256,7 @@ export default function VaultPage() {
                 <span>Vault Balance: {parseFloat(vaultBalance).toFixed(2)} USDC</span>
                 {withdrawError && <span className="text-[#ef4444] truncate max-w-[150px]" title={withdrawError}>{withdrawError}</span>}
               </div>
-              <button 
+              <button
                 onClick={handleWithdraw}
                 disabled={withdrawPending || !withdrawAmount}
                 className="w-full bg-[#111] hover:bg-[#1a1a1a] border border-[#333] text-white font-bold py-2.5 rounded-lg transition-colors text-sm disabled:opacity-50 flex items-center justify-center gap-2"
@@ -264,7 +266,7 @@ export default function VaultPage() {
               </button>
             </div>
           </div>
-          
+
           <div className="text-center mt-4 flex items-center justify-center gap-2 text-[#71717a] text-[10px]">
             <LockKeyhole size={12} />
             100% Non-Custodial • You control your funds at all times.

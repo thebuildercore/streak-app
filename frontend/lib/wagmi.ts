@@ -36,7 +36,7 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000
 // Wagmi + RainbowKit config
 export const config = getDefaultConfig({
   appName: 'StreakChaser',
-  projectId: 'streakchaser-demo', // WalletConnect project ID — replace in production
+  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'c34a2c9fa8f9e685fba33e9b1da99b92', // Requires a 32-hex string
   chains: [somniaTestnet],
   transports: {
     [somniaTestnet.id]: http(somniaTestnet.rpcUrls.default.http[0]),

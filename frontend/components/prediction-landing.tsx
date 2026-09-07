@@ -1,35 +1,135 @@
-'use client'
+// Landing page — rendered as a Server Component (no client JS needed)
 
-import { ArrowRight, Bot, Check, GitBranch, Gauge, Shield, Sparkles, Zap } from 'lucide-react'
+import { ArrowRight, Bot, Target, Flame, Shield, Sparkles } from 'lucide-react'
 
 export function PredictionLanding() {
   return (
-    <main className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border/70">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 lg:px-8">
-          <a href="/" className="font-mono text-sm font-bold tracking-[-0.06em]">StreakChaser<span className="text-destructive">.</span></a>
-          <nav className="hidden items-center gap-7 text-xs text-muted-foreground md:flex"><a href="#strategies">Strategies</a><a href="/dashboard/leaders">Leaderboard</a><a href="/dashboard">Markets</a></nav>
-          <a href="/dashboard/leaders" className="border border-border px-4 py-2 text-xs font-semibold transition hover:border-destructive hover:text-destructive">Explore agents</a>
+    <main className="min-h-screen bg-background text-foreground selection:bg-destructive/30">
+      <header className="border-b border-border/50 bg-background/80 backdrop-blur-md sticky top-0 z-50">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-8">
+          <a href="/" className="font-mono text-sm font-bold tracking-[-0.06em] flex items-center gap-2">
+            StreakChaser<span className="text-destructive">.</span>
+          </a>
+          <a href="/dashboard" className="bg-white text-black px-5 py-2.5 rounded-lg text-xs font-bold transition-all hover:bg-gray-200 hover:scale-105 shadow-sm">
+            Launch App
+          </a>
         </div>
       </header>
-      <section className="mx-auto grid max-w-7xl gap-12 px-5 pb-24 pt-20 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:pb-32 lg:pt-32">
-        <div>
-          <p className="mb-6 flex items-center gap-2 font-mono text-[10px] font-bold uppercase tracking-[0.22em] text-destructive"><span className="live-dot" /> prediction market automation</p>
-          <h1 className="max-w-4xl font-serif text-5xl leading-[0.94] tracking-[-0.06em] sm:text-7xl">Don&apos;t trade the market.<br /><span className="text-destructive">Trade the signal.</span></h1>
-          <p className="mt-7 max-w-xl text-base leading-7 text-muted-foreground">StreakChaser turns prediction-market agents into automated strategies. Follow a leader, take the exact opposite side, or build your own rules. Your bot executes the trade.</p>
-          <div className="mt-9 flex flex-wrap gap-3"><a href="/dashboard/leaders" className="group flex items-center gap-3 bg-destructive px-5 py-3 text-xs font-bold text-destructive-foreground transition hover:-translate-y-0.5">Browse to leaderboard <ArrowRight size={15} className="transition group-hover:translate-x-1" /></a></div>
-          <div className="mt-12 flex flex-wrap gap-x-10 gap-y-4 border-t border-border pt-5 text-[11px] text-muted-foreground"><span><b className="font-mono text-foreground">1,284</b> active agents</span><span><b className="font-mono text-foreground">$8.6m</b> volume routed</span><span><b className="font-mono text-foreground">24/7</b> execution</span></div>
+      
+      <section className="mx-auto grid max-w-7xl gap-12 px-5 pb-24 pt-20 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:pb-32 lg:pt-28">
+        <div className="flex flex-col justify-center">
+          <div className="mb-6 inline-flex items-center gap-2 bg-destructive/10 border border-destructive/20 text-destructive px-3 py-1 rounded-full w-fit">
+            <span className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" /> 
+            <span className="font-mono text-[10px] font-bold uppercase tracking-widest">Prediction Market Automation</span>
+          </div>
+          
+          <h1 className="max-w-4xl font-serif text-5xl leading-[1.05] tracking-[-0.04em] sm:text-6xl lg:text-7xl">
+            Automate your <br />
+            <span className="text-destructive">Prediction Trades.</span>
+          </h1>
+          
+          <p className="mt-8 max-w-xl text-base sm:text-lg leading-relaxed text-muted-foreground">
+            StreakChaser is a non-custodial copy-trading platform for the Somnia Network. Deposit USDC into your secure vault, choose a top-performing trader from the leaderboard, and let our AI agent automatically mirror their winning trades 24/7.
+          </p>
+          
+          <div className="mt-10 flex flex-wrap gap-4">
+            <a href="/dashboard" className="group flex items-center gap-3 bg-destructive rounded-lg px-7 py-4 text-sm font-bold text-destructive-foreground transition-all hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(239,68,68,0.3)]">
+              Go to Dashboard <ArrowRight size={18} className="transition-transform group-hover:translate-x-1.5" />
+            </a>
+          </div>
+          
+          <div className="mt-14 flex flex-wrap gap-x-8 gap-y-4 border-t border-border/50 pt-6 text-xs text-muted-foreground">
+            <span className="flex items-center gap-2"><Shield size={14} className="text-emerald-500" /> <b className="font-mono text-foreground">100%</b> Non-custodial</span>
+            <span className="flex items-center gap-2"><Bot size={14} className="text-blue-500" /> <b className="font-mono text-foreground">24/7</b> AI Execution</span>
+            <span className="flex items-center gap-2"><Sparkles size={14} className="text-purple-500" /> <b className="font-mono text-foreground">Somnia</b> Testnet</span>
+          </div>
         </div>
-        <div className="paper-grid-dark relative flex min-h-[390px] flex-col justify-between border border-border p-6 lg:p-8"><div className="flex items-start justify-between"><div><p className="label text-muted-foreground">Agent command center</p><p className="mt-4 max-w-xs font-serif text-3xl leading-none tracking-[-0.05em]">Your edge,<br /><span className="text-destructive">on autopilot.</span></p></div><Bot className="text-destructive" size={22} /></div><div className="space-y-3 font-mono text-[11px]"><div className="flex items-center justify-between border border-border bg-card/60 p-3"><span className="text-muted-foreground">leader_signal</span><span className="text-emerald-400">CONNECTED</span></div><div className="flex items-center justify-between border border-border bg-card/60 p-3"><span className="text-muted-foreground">execution_mode</span><span>FOLLOW / REBEL</span></div><div className="flex items-center justify-between border border-border bg-card/60 p-3"><span className="text-muted-foreground">last_execution</span><span className="text-destructive">WIN +12.4%</span></div></div><div className="absolute bottom-5 right-6 font-mono text-[10px] text-muted-foreground">LIVE // 09:42:18 UTC</div></div>
+        
+        <div className="relative flex min-h-[420px] flex-col justify-between border border-border/50 rounded-2xl p-7 lg:p-10 bg-[#0a0a0a] shadow-2xl overflow-hidden group">
+          {/* Decorative background gradients */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-destructive/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+          
+          <div className="relative z-10 flex items-start justify-between">
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-3">Agent Command Center</p>
+              <p className="max-w-xs font-serif text-3xl sm:text-4xl leading-[1.1] tracking-[-0.03em] text-white">
+                Your edge,<br /><span className="text-destructive">on autopilot.</span>
+              </p>
+            </div>
+            <div className="w-14 h-14 rounded-2xl bg-destructive/10 border border-destructive/20 flex items-center justify-center shadow-[0_0_15px_rgba(239,68,68,0.15)]">
+              <Bot className="text-destructive" size={28} />
+            </div>
+          </div>
+          
+          <div className="relative z-10 space-y-3.5 font-mono text-xs mt-10">
+            <div className="flex items-center justify-between border border-border/60 bg-black/40 backdrop-blur-md p-4 rounded-xl">
+              <span className="text-muted-foreground flex items-center gap-2.5"><Shield size={15}/> Vault Status</span>
+              <span className="text-emerald-400 font-bold flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> SECURE</span>
+            </div>
+            <div className="flex items-center justify-between border border-border/60 bg-black/40 backdrop-blur-md p-4 rounded-xl">
+              <span className="text-muted-foreground flex items-center gap-2.5"><Target size={15}/> Active Strategy</span>
+              <span className="text-white font-bold">FOLLOW LEADER</span>
+            </div>
+            <div className="flex items-center justify-between border border-destructive/30 bg-destructive/5 backdrop-blur-md p-4 rounded-xl">
+              <span className="text-muted-foreground flex items-center gap-2.5"><Flame size={15} className="text-destructive"/> Last Execution</span>
+              <span className="text-emerald-400 font-bold">BUY YES (+12.4%)</span>
+            </div>
+          </div>
+          
+          <div className="relative z-10 mt-8 flex justify-end">
+            <div className="font-mono text-[10px] font-bold text-muted-foreground flex items-center gap-2 bg-[#111] px-3 py-1.5 rounded-lg border border-[#222]">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              AGENT ONLINE
+            </div>
+          </div>
+        </div>
       </section>
-      <section id="strategies" className="mx-auto max-w-7xl px-5 py-20 lg:px-8"><div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:items-start"><div><p className="label text-destructive">Your strategy</p><h2 className="mt-4 font-serif text-4xl tracking-[-0.05em]">Not just winners.<br />The full signal.</h2></div><div className="grid gap-4 sm:grid-cols-2">{[{title:'Follow', tone:'border-foreground', body:'Mirror the leader and let your bot take the same side of the market.'},{title:'Rebel', tone:'border-destructive', body:'Invert their position. When they buy YES, your agent buys NO.'},{title:'Custom', tone:'border-border', body:'Combine multiple agents, assign weights and priorities, and add conditions.'},{title:'Risk controls', tone:'border-border', body:'Define max allocation, stop rules, and the markets your agent may touch.'}].map((item) => <div key={item.title} className={`border-l-2 ${item.tone} bg-card p-5`}><h3 className="font-mono text-sm font-bold">{item.title}</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">{item.body}</p></div>)}</div></div></section>
-      <footer className="border-t border-border"><div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-7 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between lg:px-8"><span className="font-mono font-bold text-foreground">StreakChaser<span className="text-destructive">.</span></span><span className="flex items-center gap-2"><Shield size={14} /> Non-custodial execution. You stay in control.</span></div></footer>
+
+      <section className="mx-auto max-w-7xl px-5 py-24 lg:px-8 border-t border-border/30 bg-black/20">
+        <div className="text-center mb-16">
+          <h2 className="font-serif text-4xl sm:text-5xl tracking-[-0.04em] mb-5 text-white">How it works</h2>
+          <p className="text-muted-foreground max-w-2xl mx-auto text-base sm:text-lg">Set up your automated trading vault in minutes and never miss a profitable signal again.</p>
+        </div>
+        
+        <div className="grid gap-6 md:grid-cols-3">
+          <div className="border border-border/50 bg-[#0c0c0c] p-8 rounded-2xl relative overflow-hidden transition-colors hover:border-blue-500/30">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-blue-400"></div>
+            <div className="w-12 h-12 bg-blue-500/10 text-blue-500 border border-blue-500/20 rounded-xl flex items-center justify-center mb-6">
+              <Shield size={24} />
+            </div>
+            <h3 className="text-xl font-bold mb-3 text-white">1. Fund Your Vault</h3>
+            <p className="text-sm leading-relaxed text-muted-foreground">Deposit USDC into your secure, non-custodial smart contract vault. You retain 100% ownership and can withdraw your funds at any time.</p>
+          </div>
+          
+          <div className="border border-border/50 bg-[#0c0c0c] p-8 rounded-2xl relative overflow-hidden transition-colors hover:border-emerald-500/30">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-600 to-emerald-400"></div>
+            <div className="w-12 h-12 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-xl flex items-center justify-center mb-6">
+              <Target size={24} />
+            </div>
+            <h3 className="text-xl font-bold mb-3 text-white">2. Choose a Strategy</h3>
+            <p className="text-sm leading-relaxed text-muted-foreground">Browse the leaderboard of top DreamDEX traders. Choose to <b className="text-emerald-400 font-mono">FOLLOW</b> their winning trades or <b className="text-destructive font-mono">REBEL</b> against serial losers.</p>
+          </div>
+          
+          <div className="border border-border/50 bg-[#0c0c0c] p-8 rounded-2xl relative overflow-hidden transition-colors hover:border-destructive/30">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-destructive to-red-400"></div>
+            <div className="w-12 h-12 bg-destructive/10 text-destructive border border-destructive/20 rounded-xl flex items-center justify-center mb-6">
+              <Bot size={24} />
+            </div>
+            <h3 className="text-xl font-bold mb-3 text-white">3. Agent Takes Over</h3>
+            <p className="text-sm leading-relaxed text-muted-foreground">Your assigned AI bot constantly monitors the blockchain. When your chosen trader makes a move, your bot instantly copies it using your vault funds.</p>
+          </div>
+        </div>
+      </section>
+      
+      <footer className="border-t border-border/30 bg-[#050505]">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-8 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between lg:px-8">
+          <span className="font-mono font-bold text-foreground">StreakChaser<span className="text-destructive">.</span></span>
+          <span className="flex items-center gap-2"><Sparkles size={14} className="text-purple-500" /> Built for the Somnia Network</span>
+        </div>
+      </footer>
     </main>
   )
 }
-
-export function CustomStrategyHint() { return <div className="flex items-center gap-2 text-xs text-muted-foreground"><Sparkles size={14} className="text-destructive" /> Build a weighted strategy around any agents.</div> }
-
-export function Checkmark() { return <Check size={14} /> }
 
 export default PredictionLanding

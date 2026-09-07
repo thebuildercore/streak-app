@@ -1,14 +1,13 @@
 'use client'
 
-import { ChevronDown, ArrowRight, Loader2 } from 'lucide-react'
+import { ChevronDown, ArrowRight, Loader2, TrendingUp } from 'lucide-react'
 import { useUserExecutions } from '@/lib/hooks/useApi'
-import { useMarkets } from '@somnia-chain/markets-sdk/react'
-import { formatCompact } from '@/lib/hooks/usePrices'
+import { useSpotMarkets, parseSpotPrice, formatCompact, formatPrice } from '@/lib/hooks/usePrices'
 import Link from 'next/link'
 
 export function BottomWidgets() {
   const { data: executions, loading: executionsLoading } = useUserExecutions(5)
-  const { data: markets, loading: marketsLoading } = useMarkets({ marketType: 'BINARY', limit: 3 })
+  const { spotMarkets, loading: marketsLoading } = useSpotMarkets()
 
   return (
     <div className="grid grid-cols-3 gap-4">
@@ -61,12 +60,17 @@ export function BottomWidgets() {
         </div>
       </div>
 
-      {/* Market Heatmap */}
+      {/* Spot Market Heatmap */}
       <div className="bg-[#0c0c0c] border border-[#222] rounded-xl flex flex-col h-full">
         <div className="p-4 border-b border-[#222] flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-white">Market Heatmap</h3>
-            <p className="text-[10px] text-[#71717a] mt-0.5">Top opportunities on DreamDEX</p>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-white">Spot Market Heatmap</h3>
+              <span className="px-1.5 py-0.5 text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded">
+                Somnia Mainnet
+              </span>
+            </div>
+            <p className="text-[10px] text-[#71717a] mt-0.5">Real spot markets on Somnia</p>
           </div>
         </div>
         <div className="p-2 flex-1 relative min-h-[150px]">
@@ -74,25 +78,33 @@ export function BottomWidgets() {
             <div className="absolute inset-0 flex items-center justify-center">
               <Loader2 className="w-5 h-5 animate-spin text-[#71717a]" />
             </div>
-          ) : !markets || markets.length === 0 ? (
+          ) : !spotMarkets || spotMarkets.length === 0 ? (
             <div className="absolute inset-0 flex items-center justify-center text-xs text-[#71717a]">
-              No markets available
+              No spot markets available
             </div>
           ) : (
-            markets.map(market => {
-              // Note: using testnet indexer markets here since we're using the default wagmi provider
-              const title = (market as any).question || 'Binary Market'
-              const volume = (market as any).volume || '0'
+            spotMarkets.slice(0, 4).map(market => {
+              const pair = `${market.baseSymbol || 'TOKEN'}/${market.quoteSymbol || 'USDso'}`
+              const rawPrice = parseSpotPrice(market.lastPrice, market.quoteDecimals || 18)
+              const rawVol = parseSpotPrice(market.cumulativeQuoteVolume, market.quoteDecimals || 18)
+              const trades = parseInt(market.tradeCount || '0', 10)
+              
               return (
-                <div key={market.id} className="p-3 hover:bg-[#111] rounded-lg transition-colors flex items-center justify-between mt-1">
-                  <div className="min-w-0 pr-4">
-                    <div className="text-xs font-bold text-white mb-1 truncate">{title}</div>
-                    <div className="flex gap-3 text-[10px] font-bold">
-                      <span className="text-emerald-500">Live</span>
+                <div key={market.id} className="p-2.5 hover:bg-[#111] rounded-lg transition-colors flex items-center justify-between mt-1">
+                  <div className="min-w-0 pr-2">
+                    <div className="text-xs font-bold text-white mb-0.5 flex items-center gap-1.5">
+                      {pair}
+                      <span className="text-[10px] text-emerald-400 font-mono font-medium">
+                        ${formatPrice(rawPrice, rawPrice < 1 ? 4 : 2)}
+                      </span>
+                    </div>
+                    <div className="flex gap-2 text-[10px] text-[#71717a]">
+                      <span>{trades > 0 ? `${trades.toLocaleString()} trades` : 'Live'}</span>
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <div className="text-[10px] text-[#a1a1aa] mb-1">Vol. {formatCompact(volume)}</div>
+                    <div className="text-[10px] font-mono text-emerald-400 font-bold">Vol. {formatCompact(rawVol)}</div>
+                    <div className="text-[9px] text-[#71717a] mt-0.5">Mainnet</div>
                   </div>
                 </div>
               )
@@ -123,3 +135,4 @@ export function BottomWidgets() {
     </div>
   )
 }
+

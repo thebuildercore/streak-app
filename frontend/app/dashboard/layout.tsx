@@ -1,4 +1,5 @@
 import { Sidebar } from '@/components/sidebar'
+import { Providers } from '@/components/providers'
 
 export default function DashboardLayout({
   children,
@@ -6,11 +7,13 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex h-screen bg-black overflow-hidden">
-      <Sidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {children}
+    <Providers>
+      <div className="flex h-screen bg-black overflow-hidden">
+        <Sidebar />
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {children}
+        </div>
       </div>
-    </div>
+    </Providers>
   )
 }

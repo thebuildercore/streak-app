@@ -2,15 +2,16 @@
 
 import { useState } from 'react'
 import { History, Download, Filter, ArrowUpRight, ArrowDownRight, ExternalLink, Bot, Target, Flame, Loader2 } from 'lucide-react'
-import { useHistory } from '@/lib/hooks/useApi'
+import { useUserExecutions, ExecutionData } from '@/lib/hooks/useApi'
 
 export default function HistoryPage() {
   const [filter, setFilter] = useState<'ALL' | 'FOLLOW' | 'REBEL'>('ALL')
-  const { data: history, loading } = useHistory()
+  const { data: executions, loading } = useUserExecutions(50)
 
-  const filteredHistory = history.filter(trade => {
+  const filteredHistory = (executions || []).filter((trade: ExecutionData) => {
+    const mode = trade.copy_subscriptions?.mode || 'FOLLOW'
     if (filter === 'ALL') return true
-    return trade.mode === filter
+    return mode === filter
   })
 
   return (
@@ -83,75 +84,71 @@ export default function HistoryPage() {
               <thead>
                 <tr className="text-[#71717a] text-xs uppercase tracking-wider border-b border-[#222] bg-[#0c0c0c]/50">
                   <th className="py-3 px-5">Time</th>
-                  <th className="py-3 px-5">Event ID</th>
+                  <th className="py-3 px-5">Market Pool</th>
                   <th className="py-3 px-5">Strategy</th>
                   <th className="py-3 px-5">Action</th>
                   <th className="py-3 px-5 text-right">Size</th>
-                  <th className="py-3 px-5 text-right">PnL</th>
                   <th className="py-3 px-5 text-center">Tx</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredHistory.map((trade) => (
-                  <tr key={trade.id} className="border-b border-[#222]/60 hover:bg-[#161616] transition-colors">
-                    <td className="py-3 px-5 font-mono text-xs text-[#a1a1aa]">
-                      {new Date(trade.created_at).toLocaleString()}
-                    </td>
-                    <td className="py-3 px-5 font-mono text-xs text-white">
-                      {trade.event_id.substring(0, 8)}...
-                    </td>
-                    <td className="py-3 px-5">
-                      <div className="flex items-center gap-2">
-                        {trade.mode === 'FOLLOW' ? (
-                          <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded flex items-center gap-1 font-bold">
-                            <Target size={10} /> FOLLOW
+                {filteredHistory.map((trade: ExecutionData) => {
+                  const mode = trade.copy_subscriptions?.mode || 'FOLLOW'
+                  const leader = trade.copy_subscriptions?.leader_address || 'Unknown'
+                  const isYes = trade.kind === 0 || trade.kind === 1
+
+                  return (
+                    <tr key={trade.id} className="border-b border-[#222]/60 hover:bg-[#161616] transition-colors">
+                      <td className="py-3 px-5 font-mono text-xs text-[#a1a1aa]">
+                        {new Date(trade.executed_at).toLocaleString()}
+                      </td>
+                      <td className="py-3 px-5 font-mono text-xs text-white">
+                        {(trade.market_pool || '').substring(0, 8)}...
+                      </td>
+                      <td className="py-3 px-5">
+                        <div className="flex items-center gap-2">
+                          {mode === 'FOLLOW' ? (
+                            <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded flex items-center gap-1 font-bold">
+                              <Target size={10} /> FOLLOW
+                            </span>
+                          ) : (
+                            <span className="text-[10px] bg-[#ef4444]/10 text-[#ef4444] border border-[#ef4444]/30 px-1.5 py-0.5 rounded flex items-center gap-1 font-bold">
+                              <Flame size={10} /> REBEL
+                            </span>
+                          )}
+                          <span className="text-[10px] text-[#71717a] font-mono" title={leader}>
+                            {leader.substring(0, 6)}...
                           </span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-5">
+                        {isYes ? (
+                          <div className="flex items-center gap-1 text-emerald-500 font-bold text-xs">
+                            <ArrowUpRight size={14} /> Buy YES
+                          </div>
                         ) : (
-                          <span className="text-[10px] bg-[#ef4444]/10 text-[#ef4444] border border-[#ef4444]/30 px-1.5 py-0.5 rounded flex items-center gap-1 font-bold">
-                            <Flame size={10} /> REBEL
-                          </span>
+                          <div className="flex items-center gap-1 text-[#ef4444] font-bold text-xs">
+                            <ArrowDownRight size={14} /> Buy NO
+                          </div>
                         )}
-                        <span className="text-[10px] text-[#71717a] font-mono" title={trade.leader_address}>
-                          {trade.leader_address.substring(0, 6)}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-3 px-5">
-                      {trade.trade_direction === 'YES' ? (
-                        <div className="flex items-center gap-1 text-emerald-500 font-bold text-xs">
-                          <ArrowUpRight size={14} /> Buy YES
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-1 text-[#ef4444] font-bold text-xs">
-                          <ArrowDownRight size={14} /> Buy NO
-                        </div>
-                      )}
-                    </td>
-                    <td className="py-3 px-5 text-right font-mono text-white text-xs">
-                      {trade.amount} USDC
-                    </td>
-                    <td className="py-3 px-5 text-right">
-                      {trade.pnl ? (
-                        <span className={`font-mono text-xs font-bold ${trade.pnl > 0 ? 'text-emerald-500' : 'text-[#ef4444]'}`}>
-                          {trade.pnl > 0 ? '+' : ''}{trade.pnl} USDC
-                        </span>
-                      ) : (
-                        <span className="font-mono text-xs text-[#71717a]">-</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-5 text-center">
-                      <a 
-                        href={`https://explorer.somnia.network/tx/${trade.tx_hash}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center justify-center p-1.5 rounded bg-[#222] hover:bg-[#333] text-[#a1a1aa] hover:text-white transition-colors"
-                        title="View on Explorer"
-                      >
-                        <ExternalLink size={14} />
-                      </a>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="py-3 px-5 text-right font-mono text-white text-xs">
+                        {trade.amount} USDC
+                      </td>
+                      <td className="py-3 px-5 text-center">
+                        <a 
+                          href={`https://explorer.somnia.network/tx/${trade.tx_hash}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center justify-center p-1.5 rounded bg-[#222] hover:bg-[#333] text-[#a1a1aa] hover:text-white transition-colors"
+                          title="View on Explorer"
+                        >
+                          <ExternalLink size={14} />
+                        </a>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           )}
@@ -160,3 +157,4 @@ export default function HistoryPage() {
     </div>
   )
 }
+

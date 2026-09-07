@@ -6,18 +6,34 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  webpack: (config) => {
-    config.externals.push(
-      '@x402/core',
-      '@x402/core/client',
-      '@x402/evm',
-      '@x402/evm/exact/client',
-      '@x402/evm/upto/client',
-      '@x402/svm',
-      '@x402/svm/exact/client',
-      '@react-native-async-storage/async-storage',
-    )
-    return config
+  experimental: {
+    optimizePackageImports: [
+      'lucide-react',
+      'wagmi',
+      'viem',
+      'viem/chains',
+      'viem/accounts',
+      '@rainbow-me/rainbowkit',
+      '@somnia-chain/markets-sdk',
+      '@somnia-chain/markets-sdk/react',
+      '@base-ui/react',
+      '@tanstack/react-query',
+    ],
+  },
+  // Turbopack config (Next.js 16 default bundler)
+  turbopack: {
+    resolveAlias: {
+      // Stub out react-native packages that WalletConnect drags in transitively
+      '@react-native-async-storage/async-storage': { browser: './lib/empty-module.js' },
+    },
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://127.0.0.1:4000/api/:path*',
+      },
+    ]
   },
 }
 

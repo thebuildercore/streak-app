@@ -12,6 +12,7 @@ import {
   Loader2
 } from 'lucide-react'
 import { useLeaderboard, useSubscriptions } from '@/lib/hooks/useApi'
+import { useSpotMarkets, parseSpotPrice, formatCompact, formatPrice } from '@/lib/hooks/usePrices'
 import { useAccount } from 'wagmi'
 
 export default function LeadersPage() {
@@ -26,6 +27,7 @@ export default function LeadersPage() {
   const filterParam = filter === 'all' ? undefined : filter
   const { data: traders, loading: tradersLoading } = useLeaderboard(filterParam)
   const { data: subscriptions, subscribe, unsubscribe } = useSubscriptions()
+  const { spotMarkets, loading: spotLoading, isMainnet } = useSpotMarkets()
 
   const isSubscribed = (address: string, mode: 'FOLLOW' | 'REBEL') => {
     return subscriptions.some(s => s.leader_address.toLowerCase() === address.toLowerCase() && s.mode === mode)
@@ -86,13 +88,17 @@ export default function LeadersPage() {
           <div className="flex items-center gap-2 text-xs font-mono text-[#ef4444] uppercase tracking-wider mb-1">
             <span className="w-2 h-2 rounded-full bg-[#ef4444] animate-pulse" />
             Somnia Network Leaders
+            <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full flex items-center gap-1 ml-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Data from Mainnet
+            </span>
           </div>
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white flex items-center gap-3">
             <Trophy className="text-yellow-500" size={28} />
             Leaderboard & Signal Discovery
           </h1>
           <p className="text-xs md:text-sm text-[#71717a] mt-1">
-            Ranked prediction market traders. Follow top winners or rebel against serial losers.
+            Ranked prediction & spot market traders on Somnia Mainnet. Follow top winners or rebel against serial losers.
           </p>
         </div>
 
@@ -103,6 +109,59 @@ export default function LeadersPage() {
               {tradersLoading ? '...' : traders.length} Wallets
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Mainnet Spot Markets Overview Banner */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xs font-bold text-white uppercase tracking-wider font-mono flex items-center gap-2">
+              <TrendingUp size={16} className="text-emerald-500" />
+              Live Somnia Mainnet Spot Markets
+            </h2>
+            <span className="px-2 py-0.5 text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-full">
+              Data from Mainnet
+            </span>
+          </div>
+          <span className="text-xs text-[#71717a] font-mono">Somnia Protocol SDK</span>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {spotLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-[#111] border border-[#222] rounded-xl p-4 animate-pulse h-24" />
+            ))
+          ) : spotMarkets.length === 0 ? (
+            <div className="col-span-4 bg-[#111] border border-[#222] rounded-xl p-4 text-center text-xs text-[#71717a]">
+              No spot market data available
+            </div>
+          ) : (
+            spotMarkets.slice(0, 4).map((m) => {
+              const pair = `${m.baseSymbol || 'TOKEN'}/${m.quoteSymbol || 'USDso'}`
+              const price = parseSpotPrice(m.lastPrice, m.quoteDecimals || 18)
+              const vol = parseSpotPrice(m.cumulativeQuoteVolume, m.quoteDecimals || 18)
+              const trades = parseInt(m.tradeCount || '0', 10)
+
+              return (
+                <div key={m.id} className="bg-[#111] border border-[#222] hover:border-emerald-500/40 transition-colors rounded-xl p-4 flex flex-col justify-between shadow-lg">
+                  <div className="flex items-center justify-between text-xs font-bold text-white">
+                    <span>{pair}</span>
+                    <span className="text-[9px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-mono">Mainnet</span>
+                  </div>
+                  <div className="mt-2">
+                    <div className="text-lg font-bold font-mono text-white">
+                      ${formatPrice(price, price < 1 ? 4 : 2)}
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-[#71717a] mt-1 font-mono">
+                      <span>Vol: {formatCompact(vol)}</span>
+                      <span>{trades > 0 ? `${trades.toLocaleString()} trades` : 'Active'}</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          )}
         </div>
       </div>
 
@@ -259,3 +318,4 @@ export default function LeadersPage() {
     </div>
   )
 }
+

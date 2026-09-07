@@ -22,13 +22,14 @@ export default function SettingsPage() {
   useEffect(() => {
     if (settings) {
       setFormState({
-        max_allocation_per_trade: settings.max_allocation_per_trade.toString(),
-        global_max_drawdown: settings.global_max_drawdown.toString(),
-        slippage_tolerance: settings.slippage_tolerance.toString(),
-        gas_priority: settings.gas_priority
+        max_allocation_per_trade: (settings.max_allocation_per_trade ?? settings.max_allocation ?? 250).toString(),
+        global_max_drawdown: (settings.global_max_drawdown ?? settings.max_drawdown ?? 15).toString(),
+        slippage_tolerance: (settings.slippage_tolerance ?? 0.5).toString(),
+        gas_priority: settings.gas_priority || 'fast'
       })
     }
   }, [settings])
+
 
   const handleSave = async () => {
     await saveSettings({

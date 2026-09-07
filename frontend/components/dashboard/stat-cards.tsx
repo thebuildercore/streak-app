@@ -2,7 +2,7 @@
 
 import { Wallet, TrendingUp, Copy, Flame, Target } from 'lucide-react'
 import { useVaultBalance } from '@/lib/hooks/useVault'
-import { useUserStats } from '@/lib/hooks/useApi'
+import { useUserStats, useSubscriptions } from '@/lib/hooks/useApi'
 import { formatCompact } from '@/lib/hooks/usePrices'
 import { useAccount } from 'wagmi'
 
@@ -10,13 +10,21 @@ export function StatCards() {
   const { address } = useAccount()
   const { balance, isLoading: balanceLoading } = useVaultBalance()
   const { data: stats, loading: statsLoading } = useUserStats()
+  const { data: subscriptions } = useSubscriptions()
+
+  const formattedVaultBalance = balanceLoading 
+    ? '...' 
+    : (parseFloat(balance) > 0 ? parseFloat(balance).toFixed(2) : '0.00')
+
+  const activeFollowsCount = subscriptions.filter(s => s.mode === 'FOLLOW').length
+  const activeRebelsCount = subscriptions.filter(s => s.mode === 'REBEL').length
 
   const cards = [
     {
       title: 'Vault Balance',
-      value: balanceLoading ? '...' : formatCompact(balance),
+      value: formattedVaultBalance,
       currency: 'USDC',
-      subtext: `≈ $${balanceLoading ? '...' : formatCompact(balance)}`,
+      subtext: `≈ $${formattedVaultBalance}`,
       icon: Wallet,
       color: 'text-[#a1a1aa]',
       valueColor: 'text-white'
@@ -34,7 +42,7 @@ export function StatCards() {
     },
     {
       title: 'Active Follows',
-      value: statsLoading ? '...' : (stats?.followCount || 0).toString(),
+      value: activeFollowsCount.toString(),
       currency: 'Agents',
       subtext: 'Copying positions',
       subtextColor: 'text-emerald-500',
@@ -45,7 +53,7 @@ export function StatCards() {
     },
     {
       title: 'Active Rebels',
-      value: statsLoading ? '...' : (stats?.rebelCount || 0).toString(),
+      value: activeRebelsCount.toString(),
       currency: 'Agents',
       subtext: 'Inverting positions',
       subtextColor: 'text-emerald-500',
@@ -56,7 +64,7 @@ export function StatCards() {
     },
     {
       title: 'Win Rate',
-      value: statsLoading ? '...' : stats?.winRate || '0.00%',
+      value: statsLoading ? '...' : (stats?.winRate || '0.00%'),
       currency: '',
       subtext: `Total Trades: ${stats?.totalTrades || 0}`,
       icon: Target,
@@ -73,7 +81,7 @@ export function StatCards() {
             <card.icon size={16} className={card.color} />
             <span className="text-sm font-medium">{card.title}</span>
           </div>
-          
+
           <div className="mt-2">
             <div className="flex items-baseline gap-1.5">
               <span className={`text-2xl font-bold ${card.valueColor}`}>{card.value}</span>
@@ -87,10 +95,10 @@ export function StatCards() {
           {card.sparkline && (
             <div className="absolute right-0 bottom-4 w-20 h-10 opacity-50">
               <svg viewBox="0 0 100 40" preserveAspectRatio="none" className="w-full h-full">
-                <path 
-                  d="M0,40 L10,35 L20,38 L30,25 L40,30 L50,15 L60,20 L70,5 L80,15 L90,0 L100,10" 
-                  fill="none" 
-                  stroke={card.sparkline === 'emerald' ? '#10b981' : '#ef4444'} 
+                <path
+                  d="M0,40 L10,35 L20,38 L30,25 L40,30 L50,15 L60,20 L70,5 L80,15 L90,0 L100,10"
+                  fill="none"
+                  stroke={card.sparkline === 'emerald' ? '#10b981' : '#ef4444'}
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -103,3 +111,4 @@ export function StatCards() {
     </div>
   )
 }
+

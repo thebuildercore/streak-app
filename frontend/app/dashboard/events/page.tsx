@@ -1,11 +1,82 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, ChevronDown, Bell, Star, CheckCircle2 } from 'lucide-react'
+import { Search, ChevronDown, Bell, Star, CheckCircle2, Loader2 } from 'lucide-react'
+import { useAccount, useWriteContract } from 'wagmi'
+import { parseUnits } from 'viem'
+import { ConnectButton, useConnectModal } from '@rainbow-me/rainbowkit'
+import { useMarkets } from '@somnia-chain/markets-sdk/react'
+import { priceToProbability } from '@somnia-chain/markets-sdk'
+import { USDC_ADDRESS } from '@/lib/wagmi'
+import { ERC20_ABI, DREAMDEX_BINARY_POOL_ABI } from '@/lib/abis'
 
 export default function EventsPage() {
   const [activeTab, setActiveTab] = useState<'top' | 'losers'>('top')
   const [isThemeOpen, setIsThemeOpen] = useState(false)
+  const [tradeAmount, setTradeAmount] = useState('10')
+  const [selectedMarketId, setSelectedMarketId] = useState<string | null>(null)
+
+  const { address: userAddress } = useAccount()
+  const { openConnectModal } = useConnectModal()
+  const { data: markets, loading: marketsLoading } = useMarkets({ marketType: 'BINARY', limit: 10 })
+
+  // Add logging to track what is being returned from mainnet
+  console.log('[Events Page] useMarkets response:', { markets })
+
+  const selectedMarket = (markets?.find((m: any) => m.id === selectedMarketId) || markets?.[0]) as any
+  const marketPoolAddress = (selectedMarket?.poolAddress || selectedMarket?.marketAddress) as `0x${string}`
+
+  const { writeContractAsync: writeContract, isPending: isTrading } = useWriteContract()
+
+  const handleTrade = async (isYes: boolean) => {
+    if (!userAddress) {
+      if (openConnectModal) {
+        openConnectModal()
+      } else {
+        alert('Please connect your Web3 wallet first to place trades.')
+      }
+      return
+    }
+
+    if (!marketPoolAddress) {
+      alert('Market pool address not available yet. Please select a valid event.')
+      return
+    }
+
+    try {
+      const amountWei = parseUnits(tradeAmount, 6) // USDC has 6 decimals
+      const builderAddress = userAddress as `0x${string}`
+
+      // Step 1: Approve
+      await writeContract({
+        address: USDC_ADDRESS,
+        abi: ERC20_ABI,
+        functionName: 'approve',
+        args: [marketPoolAddress, amountWei],
+      })
+
+      // Step 2: Trade (0 for Buy YES, 2 for Buy NO)
+      await writeContract({
+        address: marketPoolAddress,
+        abi: DREAMDEX_BINARY_POOL_ABI,
+        functionName: 'placeBinaryOrder',
+        args: [isYes ? 0 : 2, parseUnits('1', 6), amountWei, BigInt('18446744073709551615'), 0, 0, builderAddress, BigInt(0), BigInt(0)],
+      })
+
+    } catch (err: any) {
+      console.error('[Trade Error]', err)
+      const errorMsg = err?.shortMessage || err?.message || ''
+      if (err?.name === 'ConnectorNotConnectedError' || errorMsg.includes('Connector not connected')) {
+        if (openConnectModal) openConnectModal()
+      } else if (errorMsg.includes('User denied') || errorMsg.includes('User rejected')) {
+        console.log('Transaction signature cancelled by user.')
+      } else {
+        alert(errorMsg || 'Trade failed')
+      }
+    }
+  }
+
+
 
   return (
     <div className="flex flex-col h-full bg-black text-white overflow-hidden">
@@ -16,15 +87,15 @@ export default function EventsPage() {
             <div className="w-4 h-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
               <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
             </div>
-            Somnia Mainnet
+            Somnia Devnet
             <ChevronDown size={16} className="text-[#666] ml-1" />
           </button>
 
-          <button className="flex items-center gap-2 bg-[#111] hover:bg-[#1a1a1a] border border-[#333] rounded-full px-4 py-2 text-sm text-white transition-colors">
-            <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-purple-500 to-orange-500"></div>
-            0x7Af3...8c2D
-            <ChevronDown size={16} className="text-[#666] ml-1" />
-          </button>
+          <ConnectButton
+            chainStatus="icon"
+            accountStatus="address"
+            showBalance={false}
+          />
 
           <button className="relative p-2 text-[#a1a1aa] hover:text-white transition-colors border border-[#333] rounded-full bg-[#111] hover:bg-[#1a1a1a]">
             <Bell size={20} />
@@ -45,22 +116,22 @@ export default function EventsPage() {
             <div className="p-4 border-b border-[#222] flex gap-3 relative">
               <div className="relative flex-1">
                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#71717a]" />
-                <input 
-                  type="text" 
-                  placeholder="Search events, keywords..." 
+                <input
+                  type="text"
+                  placeholder="Search events, keywords..."
                   className="w-full bg-[#111] border border-[#333] rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder:text-[#71717a] focus:outline-none focus:border-emerald-500/50"
                 />
               </div>
-              
+
               <div className="relative">
-                <button 
+                <button
                   onClick={() => setIsThemeOpen(!isThemeOpen)}
                   className={`flex items-center gap-2 bg-[#111] border border-[#333] rounded-lg px-4 py-2 text-sm transition-colors ${isThemeOpen ? 'text-white border-[#555]' : 'text-[#a1a1aa] hover:text-white'}`}
                 >
                   All Themes
                   <ChevronDown size={16} />
                 </button>
-                
+
                 {isThemeOpen && (
                   <div className="absolute top-full left-0 mt-2 w-48 bg-[#111] border border-[#333] rounded-lg shadow-xl z-50 py-2">
                     <div className="px-3 py-1.5 text-xs font-bold text-white">All Themes</div>
@@ -79,7 +150,7 @@ export default function EventsPage() {
                 Trending
                 <ChevronDown size={16} />
               </button>
-              
+
               <button className="flex items-center gap-2 bg-[#111] border border-[#333] rounded-lg px-4 py-2 text-sm text-[#a1a1aa] hover:text-white transition-colors">
                 Liquidity
                 <ChevronDown size={16} />
@@ -95,101 +166,43 @@ export default function EventsPage() {
             </div>
 
             <div className="flex-1 overflow-y-auto">
-              {/* Event Row 1 */}
-              <div className="grid grid-cols-[1fr_80px_80px_100px_80px] gap-4 px-6 py-4 border-b border-[#222]/50 hover:bg-[#111] transition-colors items-center bg-[#111]">
-                <div className="flex gap-4">
-                  <div className="text-3xl mt-1">🌍</div>
-                  <div>
-                    <div className="text-[10px] text-blue-400 font-bold tracking-wider uppercase mb-1">Geopolitics</div>
-                    <div className="text-sm font-bold text-white">Will a ceasefire be reached in Ukraine before June 1, 2024?</div>
-                    <div className="text-[10px] text-[#71717a] mt-1">$2.45M Vol.</div>
-                  </div>
+              {marketsLoading ? (
+                <div className="flex justify-center p-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-[#71717a]" />
                 </div>
-                <div className="text-center">
-                  <div className="text-emerald-500 font-bold text-lg">62%</div>
-                  <div className="text-emerald-500 text-[10px]">▲ 4%</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-[#ef4444] font-bold text-lg">38%</div>
-                  <div className="text-[#ef4444] text-[10px]">▼ 4%</div>
-                </div>
-                <div className="text-right text-[#a1a1aa] font-medium">$248K</div>
-                <div className="text-right">
-                  <button className="px-4 py-1.5 bg-[#222] hover:bg-[#333] text-white text-xs font-medium rounded transition-colors">Trade</button>
-                </div>
-              </div>
+              ) : markets?.length ? (
+                markets.map((market: any, index: number) => {
+                  const yesProb = market.lastPrice ? priceToProbability(market.lastPrice, market.quoteDecimals) : 0.5
+                  const yesPercent = Math.round(yesProb * 100)
+                  const noPercent = 100 - yesPercent
 
-              {/* Event Row 2 */}
-              <div className="grid grid-cols-[1fr_80px_80px_100px_80px] gap-4 px-6 py-4 border-b border-[#222]/50 hover:bg-[#111] transition-colors items-center">
-                <div className="flex gap-4">
-                  <div className="text-3xl mt-1">🇺🇸</div>
-                  <div>
-                    <div className="text-[10px] text-red-400 font-bold tracking-wider uppercase mb-1">Politics</div>
-                    <div className="text-sm font-bold text-white">Will Donald Trump win the 2024 U.S. Presidential election?</div>
-                    <div className="text-[10px] text-[#71717a] mt-1">$10.21M Vol.</div>
-                  </div>
+                  return (
+                    <div key={market.id} onClick={() => setSelectedMarketId(market.id)} className={`grid grid-cols-[1fr_80px_80px_100px_80px] gap-4 px-6 py-4 border-b transition-colors items-center cursor-pointer ${selectedMarket?.id === market.id ? 'bg-[#111] border-[#333]' : 'border-[#222]/50 hover:bg-[#111]'}`}>
+                      <div className="flex gap-4">
+                        <div className="text-3xl mt-1">📊</div>
+                        <div>
+                          <div className="text-[10px] text-blue-400 font-bold tracking-wider uppercase mb-1">Market</div>
+                          <div className="text-sm font-bold text-white line-clamp-2" title={market.question}>{market.question || 'Binary Market'}</div>
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-emerald-500 font-bold text-lg">{yesPercent}%</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-[#ef4444] font-bold text-lg">{noPercent}%</div>
+                      </div>
+                      <div className="text-right text-[#a1a1aa] font-medium">-</div>
+                      <div className="text-right">
+                        <button className="px-4 py-1.5 bg-[#222] hover:bg-[#333] text-white text-xs font-medium rounded transition-colors">Trade</button>
+                      </div>
+                    </div>
+                  )
+                })
+              ) : (
+                <div className="flex justify-center p-12 text-[#71717a]">
+                  No markets found on Mainnet.
                 </div>
-                <div className="text-center">
-                  <div className="text-emerald-500 font-bold text-lg">55%</div>
-                  <div className="text-emerald-500 text-[10px]">▲ 3%</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-[#ef4444] font-bold text-lg">45%</div>
-                  <div className="text-[#ef4444] text-[10px]">▼ 3%</div>
-                </div>
-                <div className="text-right text-[#a1a1aa] font-medium">$1.25M</div>
-                <div className="text-right">
-                  <button className="px-4 py-1.5 bg-[#222] hover:bg-[#333] text-white text-xs font-medium rounded transition-colors">Trade</button>
-                </div>
-              </div>
-
-              {/* Event Row 3 */}
-              <div className="grid grid-cols-[1fr_80px_80px_100px_80px] gap-4 px-6 py-4 border-b border-[#222]/50 hover:bg-[#111] transition-colors items-center">
-                <div className="flex gap-4">
-                  <div className="text-3xl mt-1">₿</div>
-                  <div>
-                    <div className="text-[10px] text-orange-400 font-bold tracking-wider uppercase mb-1">Crypto</div>
-                    <div className="text-sm font-bold text-white">Will Bitcoin (BTC) be above $100,000 on June 30, 2024?</div>
-                    <div className="text-[10px] text-[#71717a] mt-1">$4.12M Vol.</div>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-emerald-500 font-bold text-lg">48%</div>
-                  <div className="text-emerald-500 text-[10px]">▲ 6%</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-[#ef4444] font-bold text-lg">52%</div>
-                  <div className="text-[#ef4444] text-[10px]">▼ 6%</div>
-                </div>
-                <div className="text-right text-[#a1a1aa] font-medium">$512K</div>
-                <div className="text-right">
-                  <button className="px-4 py-1.5 bg-[#222] hover:bg-[#333] text-white text-xs font-medium rounded transition-colors">Trade</button>
-                </div>
-              </div>
-
-              {/* Event Row 4 */}
-              <div className="grid grid-cols-[1fr_80px_80px_100px_80px] gap-4 px-6 py-4 border-b border-[#222]/50 hover:bg-[#111] transition-colors items-center">
-                <div className="flex gap-4">
-                  <div className="text-3xl mt-1">⚽</div>
-                  <div>
-                    <div className="text-[10px] text-green-400 font-bold tracking-wider uppercase mb-1">Sports</div>
-                    <div className="text-sm font-bold text-white">Will Real Madrid win the UEFA Champions League 23/24?</div>
-                    <div className="text-[10px] text-[#71717a] mt-1">$1.33M Vol.</div>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <div className="text-emerald-500 font-bold text-lg">71%</div>
-                  <div className="text-emerald-500 text-[10px]">▲ 2%</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-[#ef4444] font-bold text-lg">29%</div>
-                  <div className="text-[#ef4444] text-[10px]">▼ 2%</div>
-                </div>
-                <div className="text-right text-[#a1a1aa] font-medium">$182K</div>
-                <div className="text-right">
-                  <button className="px-4 py-1.5 bg-[#222] hover:bg-[#333] text-white text-xs font-medium rounded transition-colors">Trade</button>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -197,54 +210,79 @@ export default function EventsPage() {
           <div className="flex flex-col gap-6">
             <div className="bg-[#0c0c0c] border border-[#222] rounded-xl flex flex-col p-6">
               <h2 className="text-sm font-bold text-white mb-4">Selected Event</h2>
-              
-              <div className="flex justify-between items-start mb-6">
-                <div className="flex gap-3">
-                  <div className="text-3xl">🌍</div>
-                  <div>
-                    <div className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded uppercase font-bold tracking-wider inline-block mb-2">Geopolitics</div>
-                    <h3 className="text-lg font-bold text-white leading-tight">Will a ceasefire be reached in Ukraine before June 1, 2024?</h3>
-                    <div className="flex items-center gap-2 text-xs text-[#71717a] mt-2">
-                      <span>$2.45M Vol.</span>
-                      <span>•</span>
-                      <span>Closes May 31, 2024</span>
-                    </div>
-                  </div>
-                </div>
-                <button className="text-[#71717a] hover:text-yellow-500 transition-colors">
-                  <Star size={20} />
-                </button>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[#111] border border-emerald-500/30 rounded-xl p-4 relative overflow-hidden group">
-                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent"></div>
-                  <div className="relative z-10">
-                    <div className="flex justify-between items-center mb-2">
-                      <div className="text-xs font-bold bg-emerald-500 text-black px-2 py-0.5 rounded uppercase">Yes</div>
-                      <div className="text-emerald-500 text-xs font-bold flex items-center gap-1">▲ 4%</div>
+              {selectedMarket ? (
+                <>
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="flex gap-3">
+                      <div className="text-3xl">🌍</div>
+                      <div>
+                        <div className="text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded uppercase font-bold tracking-wider inline-block mb-2">Market</div>
+                        <h3 className="text-lg font-bold text-white leading-tight">{selectedMarket.question || 'Binary Market'}</h3>
+                        <div className="flex items-center gap-2 text-xs text-[#71717a] mt-2">
+                          <span>Closes {new Date(Number(selectedMarket.expiry) * 1000).toLocaleDateString()}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-4xl font-bold text-white mb-4">62%</div>
-                    <button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-colors">
-                      Bet YES
+                    <button className="text-[#71717a] hover:text-yellow-500 transition-colors">
+                      <Star size={20} />
                     </button>
                   </div>
-                </div>
 
-                <div className="bg-[#111] border border-[#ef4444]/30 rounded-xl p-4 relative overflow-hidden group">
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#ef4444]/5 to-transparent"></div>
-                  <div className="relative z-10">
-                    <div className="flex justify-between items-center mb-2">
-                      <div className="text-xs font-bold text-[#ef4444] px-2 py-0.5 uppercase">No</div>
-                      <div className="text-[#ef4444] text-xs font-bold flex items-center gap-1">▼ 4%</div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Trade Amount Input */}
+                    <div className="col-span-2 mb-2 bg-[#111] border border-[#333] rounded-xl p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-[#71717a] font-bold">TRADE AMOUNT</span>
+                        <span className="text-xs text-[#a1a1aa]">USDC</span>
+                      </div>
+                      <input
+                        type="number"
+                        value={tradeAmount}
+                        onChange={(e) => setTradeAmount(e.target.value)}
+                        className="w-full bg-transparent text-2xl font-bold text-white outline-none mt-1"
+                        placeholder="0.00"
+                      />
                     </div>
-                    <div className="text-4xl font-bold text-white mb-4">38%</div>
-                    <button className="w-full bg-[#ef4444] hover:bg-[#dc2626] text-white font-bold py-3 rounded-lg shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-colors">
-                      Bet NO
-                    </button>
+
+                    <div className="bg-[#111] border border-emerald-500/30 rounded-xl p-4 relative overflow-hidden group">
+                      <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent"></div>
+                      <div className="relative z-10">
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="text-xs font-bold bg-emerald-500 text-black px-2 py-0.5 rounded uppercase">Yes</div>
+                        </div>
+                        <div className="text-4xl font-bold text-white mb-4">{Math.round((selectedMarket.lastPrice ? priceToProbability(selectedMarket.lastPrice, selectedMarket.quoteDecimals) : 0.5) * 100)}%</div>
+                        <button
+                          onClick={() => handleTrade(true)}
+                          disabled={isTrading}
+                          className="w-full flex justify-center items-center gap-2 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-white font-bold py-3 rounded-lg shadow-[0_0_15px_rgba(16,185,129,0.2)] transition-colors"
+                        >
+                          {isTrading ? <Loader2 size={16} className="animate-spin" /> : 'Bet YES'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="bg-[#111] border border-[#ef4444]/30 rounded-xl p-4 relative overflow-hidden group">
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#ef4444]/5 to-transparent"></div>
+                      <div className="relative z-10">
+                        <div className="flex justify-between items-center mb-2">
+                          <div className="text-xs font-bold text-[#ef4444] px-2 py-0.5 uppercase">No</div>
+                        </div>
+                        <div className="text-4xl font-bold text-white mb-4">{100 - Math.round((selectedMarket.lastPrice ? priceToProbability(selectedMarket.lastPrice, selectedMarket.quoteDecimals) : 0.5) * 100)}%</div>
+                        <button
+                          onClick={() => handleTrade(false)}
+                          disabled={isTrading}
+                          className="w-full flex justify-center items-center gap-2 bg-[#ef4444] hover:bg-[#dc2626] disabled:opacity-50 text-white font-bold py-3 rounded-lg shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-colors"
+                        >
+                          {isTrading ? <Loader2 size={16} className="animate-spin" /> : 'Bet NO'}
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                </>
+              ) : (
+                <div className="text-[#71717a] py-8 text-center">Select an event from the list</div>
+              )}
             </div>
 
             {/* Top Traders on this Event */}
@@ -257,13 +295,13 @@ export default function EventsPage() {
               </div>
 
               <div className="flex gap-2 mb-4">
-                <button 
+                <button
                   onClick={() => setActiveTab('top')}
                   className={`px-3 py-1.5 text-xs font-medium rounded border ${activeTab === 'top' ? 'bg-[#111] border-[#ef4444]/50 text-white' : 'border-transparent text-[#71717a] hover:text-white'}`}
                 >
                   Top Performers
                 </button>
-                <button 
+                <button
                   onClick={() => setActiveTab('losers')}
                   className={`px-3 py-1.5 text-xs font-medium rounded border ${activeTab === 'losers' ? 'bg-[#111] border-[#ef4444]/50 text-white' : 'border-transparent text-[#71717a] hover:text-white'}`}
                 >

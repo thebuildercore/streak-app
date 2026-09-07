@@ -1,11 +1,13 @@
 // lib/somnia.ts
-import { SomniaMarkets } from '@somnia-chain/markets-sdk';
-import { somniaShannon } from '@somnia-chain/markets-sdk/chains';
+import { SomniaMarkets, SOMNIA_MAINNET_ADDRESSES } from '@somnia-chain/markets-sdk';
+import { somniaMainnet } from '@somnia-chain/markets-sdk/chains';
 
-// Initialize the client for the Testnet
+// Initialize the client for the Mainnet
 export const somnia = new SomniaMarkets({
-    indexerUrl: 'https://stg.api.dreamdex.io', // DreamDEX testnet indexer URL
-    chain: somniaShannon,
+    indexerUrl: 'https://prd.smk.somnia.host/v1/graphql',
+    chain: somniaMainnet,
+    wsRpcUrl: 'wss://api.infra.mainnet.somnia.network/ws',
+    addresses: SOMNIA_MAINNET_ADDRESSES,
 });
 
 export const { client } = somnia;
